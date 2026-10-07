@@ -1,0 +1,25 @@
+# env / secrets
+.env
+.env.*
+!.env.example
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+# Node / Next.js
+node_modules/
+.next/
+out/
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+# build / misc
+dist/
+coverage/
+*.log
