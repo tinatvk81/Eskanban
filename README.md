@@ -20,7 +20,8 @@ deal pipeline, commission accounting, new-listing intake and mini agency website
 ## Getting started
 
 ```bash
-make hooks   # enable commit-msg / pre-commit hooks (once per clone)
+git config core.hooksPath .githooks   # enable commit-msg / pre-commit hooks (once per clone)
+# or: make hooks (if make is installed)
 ```
 
 Start every working session with [docs/context/project-context.md](docs/context/project-context.md).
