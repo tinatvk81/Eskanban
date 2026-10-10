@@ -23,3 +23,5 @@ __pycache__/
 dist/
 coverage/
 *.log
+next-env.d.ts
+*.tsbuildinfo
