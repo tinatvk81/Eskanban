@@ -1,0 +1,31 @@
+/* Design tokens — source of truth: docs/context/design-system.md */
+:root {
+  color-scheme: dark;
+  --bg: #14141f;
+  --surface: #1e1e2e;
+  --text: #e8e6e3;
+  --text-muted: #a9a7b3;
+  --border: #33334a;
+  --accent: #daa520;
+  --on-accent: #14141f;
+  --accent-hover: #b8860b;
+  --accent-text: #daa520;
+  --success: #34d399;
+  --danger: #f87171;
+  --radius: 12px;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f7f5f0;
+  --surface: #ffffff;
+  --text: #1f1f2b;
+  --text-muted: #5b5a66;
+  --border: #dedad0;
+  --accent: #daa520;
+  --on-accent: #14141f;
+  --accent-hover: #b8860b;
+  --accent-text: #8a6508;
+  --success: #15803d;
+  --danger: #b91c1c;
+}

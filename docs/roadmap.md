@@ -2,6 +2,14 @@
 
 Phases are ordered by dependency, not dates. A phase is done only when its exit criteria are met.
 
+## Progress
+| Phase | State |
+|---|---|
+| 0 Foundation | Done, except the Runflare staging environment (needs the owner's account) |
+| 1 Platform skeleton | Built and tested locally: tenants, roles, auth, app shell, i18n, themes, CI definition. Open: first CI run on GitHub, staging deploy, branch-protection ruleset |
+| 2 Files (MVP) | Not started — needs the field list from the legacy app |
+| 3–7 | Not started |
+
 ## Phase 0 — Foundation
 - Repo, docs, ADRs, hooks, changelog (this commit set).
 - Runflare project created; PostgreSQL and Redis provisioned (staging).
@@ -11,7 +19,7 @@ Phases are ordered by dependency, not dates. A phase is done only when its exit 
 ## Phase 1 — Platform skeleton
 - Auth, agencies (tenants), roles (Manager/Advisor), private workspaces.
 - App shell: RTL layout, i18n layer, light/dark themes from design tokens.
-- CI: lint + tests per app; auto-deploy staging from `main`.
+- CI: lint + tests per app; auto-deploy staging from `master`.
 - **Exit:** two agencies cannot see each other's data (automated test); advisor cannot see another advisor's items.
 
 ## Phase 2 — MVP: Files module
