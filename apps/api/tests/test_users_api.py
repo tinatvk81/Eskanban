@@ -1,6 +1,6 @@
 import uuid
 
-from tests.conftest import PASSWORD, auth, login
+from tests.conftest import PASSWORD, auth, clear_must_change, login
 
 
 def _create_user(client, token, phone, role="advisor", **extra):
@@ -27,10 +27,11 @@ def test_manager_creates_advisor_who_must_change_password(client, make_agency):
     assert advisor_login.json()["must_change_password"] is True
 
 
-def test_advisor_cannot_manage_users(client, make_agency):
+def test_advisor_cannot_manage_users(client, make_agency, db):
     info = make_agency("u-rbac", seats=3)
     manager = login(client, info["phone"])
     _create_user(client, manager, "09128880002")
+    clear_must_change(db, "+989128880002")
     advisor = login(client, "09128880002")
 
     assert client.get("/api/v1/users", headers=auth(advisor)).status_code == 403

@@ -55,6 +55,7 @@ Next: Files module (waiting for the field list from the legacy app). Details: do
 | 0008 | Database and tenant isolation | Proposed |
 | 0009 | Authentication and sessions | Proposed |
 | 0010 | Web authentication through a BFF | Proposed |
+| 0011 | Property files data model | Proposed |
 
 ## Open questions
 - Runflare specifics (sub-folder deploys, start/migration commands, versions, proxy headers) — see infra/README.md.

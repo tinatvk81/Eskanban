@@ -64,7 +64,12 @@ def engine():
 def db(engine):
     yield engine
     with engine.begin() as conn:
-        conn.execute(text("TRUNCATE auth_sessions, users, agencies CASCADE"))
+        conn.execute(
+            text(
+                "TRUNCATE property_history, property_favorites, properties, "
+                "auth_sessions, users, agencies CASCADE"
+            )
+        )
 
 
 @pytest.fixture
@@ -91,6 +96,7 @@ def make_agency(db):
         seats: int = 3,
         manager_phone: str | None = None,
         manager_email: str | None = None,
+        must_change: bool = False,
     ):
         phone = manager_phone or next_phone()
         with system_session(engine=db) as session:
@@ -105,6 +111,7 @@ def make_agency(db):
                 manager_password=PASSWORD,
                 manager_email=manager_email,
             )
+            manager.must_change_password = must_change
             session.commit()
             return {
                 "agency_id": agency.id,
@@ -130,3 +137,87 @@ def login(client: TestClient, phone: str, password: str = PASSWORD) -> str:
 
 def auth(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def make_advisor(db):
+    """Add an advisor to an agency (made with make_agency) and return their credentials."""
+
+    def _make(
+        agency: dict, *, phone: str | None = None, name: str = "Advisor", must_change: bool = False
+    ):
+        from app.db.models import Role
+        from app.db.session import tenant_session
+        from app.services.agencies import add_user
+
+        number = phone or next_phone()
+        with tenant_session(agency["agency_id"], engine=db) as session:
+            user = add_user(
+                session, phone=number, full_name=name, role=Role.ADVISOR, password=PASSWORD
+            )
+            user.must_change_password = must_change
+            session.commit()
+            return {
+                "user_id": user.id,
+                "phone": user.phone,
+                "password": PASSWORD,
+                "agency_id": agency["agency_id"],
+            }
+
+    return _make
+
+
+@pytest.fixture(scope="session")
+def city_ids(engine):
+    """Ids of a few seeded cities: mashhad, tehran, neyshabur."""
+    from sqlalchemy import text
+
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("SELECT name, id FROM cities WHERE name IN ('مشهد', 'تهران', 'نیشابور')")
+        ).all()
+    ids = {name: cid for name, cid in rows}
+    return {"mashhad": ids["مشهد"], "tehran": ids["تهران"], "neyshabur": ids["نیشابور"]}
+
+
+def clear_must_change(engine, phone: str) -> None:
+    from sqlalchemy import text
+
+    with engine.begin() as conn:
+        conn.execute(
+            text("UPDATE users SET must_change_password = false WHERE phone = :p"), {"p": phone}
+        )
+
+
+# ------------------------------------------------------------------ property helpers
+def prop_values(city_id: int, **overrides):
+    """A complete, valid payload for create/update, in the shape the service expects."""
+    from app.schemas.properties import PropertyCreate
+
+    data = {
+        "deal_type": "sale",
+        "city_id": city_id,
+        "property_types": ["apartment"],
+        "address": "بلوار وکیل‌آباد، وکیل‌آباد ۱۲",
+        "built_area_m2": 100,
+        "rooms": 2,
+        "price_total": 5_000_000_000,
+        "owner_name": "آقای احمدی",
+        "owner_phone": "09121112233",
+    }
+    data.update(overrides)
+    return PropertyCreate(**data).model_dump(exclude={"owner_user_id"})
+
+
+def make_ctx(agency_id, user_id, role):
+    import uuid
+
+    from app.services.auth import AuthContext
+
+    return AuthContext(
+        user_id=user_id,
+        agency_id=agency_id,
+        role=role,
+        session_id=uuid.uuid4(),
+        must_change_password=False,
+    )

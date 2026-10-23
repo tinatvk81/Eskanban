@@ -12,11 +12,15 @@ _STATUS: dict[type[e.DomainError], int] = {
     e.SeatLimitReached: 409,
     e.LastManager: 409,
     e.UserNotFound: 404,
+    e.PropertyNotFound: 404,
+    e.VersionConflict: 409,
+    e.CityNotFound: 422,
     e.InvalidCredentials: 401,
     e.NotAuthenticated: 401,
     e.AccountLocked: 429,
     e.WrongPassword: 400,
     e.Forbidden: 403,
+    e.PasswordChangeRequired: 403,
     e.ScopeRequired: 500,
 }
 

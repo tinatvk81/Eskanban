@@ -3,7 +3,7 @@ from tests.conftest import PASSWORD, auth, login
 
 
 def test_login_returns_token_and_user(client, make_agency):
-    info = make_agency("api-login")
+    info = make_agency("api-login", must_change=True)
     res = client.post("/api/v1/auth/login", json={"phone": info["phone"], "password": PASSWORD})
     assert res.status_code == 200
     body = res.json()
@@ -75,7 +75,7 @@ def test_logout_ends_the_session(client, make_agency):
 
 
 def test_change_password_flow(client, make_agency):
-    info = make_agency("api-change")
+    info = make_agency("api-change", must_change=True)
     current = login(client, info["phone"])
     other = login(client, info["phone"])
 

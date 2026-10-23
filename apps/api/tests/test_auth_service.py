@@ -126,7 +126,7 @@ def test_inactive_agency_cannot_log_in(db, make_agency):
 
 
 def test_resolve_token_returns_identity(db, make_agency):
-    info = make_agency("resolve")
+    info = make_agency("resolve", must_change=True)
     token, session_id, user_id = _login(db, info)
     ctx = _resolve(db, token)
     assert (ctx.user_id, ctx.agency_id, ctx.session_id) == (user_id, info["agency_id"], session_id)

@@ -11,3 +11,4 @@ versioning: [SemVer](https://semver.org/).
 - Database layer, Alembic migrations, agencies and users, tenant isolation with tests.
 - Mobile-number login, revocable sessions, team management endpoints and operator CLI.
 - Web login, forced password change and dashboard pages (cookie-based sessions through the web server).
+- Property files backend: data model, filters, visibility, history, favorites, geography data and vocabularies.
