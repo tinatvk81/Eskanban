@@ -7,7 +7,7 @@ Phases are ordered by dependency, not dates. A phase is done only when its exit 
 |---|---|
 | 0 Foundation | Done, except the Runflare staging environment (needs the owner's account) |
 | 1 Platform skeleton | Built and tested locally: tenants, roles, auth, app shell, i18n, themes, CI definition. Open: first CI run on GitHub, staging deploy, branch-protection ruleset |
-| 2 Files (MVP) | Not started — needs the field list from the legacy app |
+| 2 Files (MVP) | Backend built (model, API, tests); web screens next |
 | 3–7 | Not started |
 
 ## Phase 0 — Foundation

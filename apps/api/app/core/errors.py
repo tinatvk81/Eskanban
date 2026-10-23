@@ -70,3 +70,25 @@ class NotAuthenticated(DomainError):
 
 class Forbidden(DomainError):
     code = "forbidden"
+
+
+class PropertyNotFound(DomainError):
+    """Unknown, other agency, soft-deleted or not visible to this user: deliberately the same."""
+
+    code = "property_not_found"
+
+
+class VersionConflict(DomainError):
+    """The file was changed by someone else since the client read it."""
+
+    code = "version_conflict"
+
+
+class CityNotFound(InvalidInput):
+    code = "city_not_found"
+
+
+class PasswordChangeRequired(Forbidden):
+    """The user still has a temporary password and must change it before using the app."""
+
+    code = "password_change_required"

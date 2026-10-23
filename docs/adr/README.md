@@ -14,3 +14,4 @@ Format: [template.md](template.md). Statuses: Proposed → Accepted → Supersed
 | [0008](0008-database-and-tenant-isolation.md) | Database and tenant isolation | Proposed |
 | [0009](0009-authentication-and-sessions.md) | Authentication and sessions | Proposed |
 | [0010](0010-web-authentication-via-bff.md) | Web authentication through a backend-for-frontend (BFF) | Proposed |
+| [0011](0011-property-files-data-model.md) | Property files data model | Proposed |

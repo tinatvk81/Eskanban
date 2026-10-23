@@ -51,6 +51,25 @@ curl -s localhost:8000/api/v1/auth/me -H 'authorization: Bearer <access_token>'
 
 Errors use one shape: `{"error": {"code": "...", "message": "..."}}`.
 
+## Property files and reference data
+Everything below needs a login without a pending password change (otherwise `403 password_change_required`).
+
+| Endpoint | Who | Purpose |
+|---|---|---|
+| `GET /api/v1/properties` | logged in | list with filters, sorting, pagination (see the OpenAPI docs) |
+| `POST /api/v1/properties` | logged in | create a file (a manager may set `owner_user_id`) |
+| `GET / PUT /api/v1/properties/{id}` | visible / owner or manager | read / replace a file (`version` required, 409 on conflict) |
+| `POST .../{id}/status` | owner or manager | active, inactive or closed (+ deal date) |
+| `POST .../{id}/favorite` | logged in | toggle your personal star |
+| `POST .../{id}/share`, `/reassign`, `/soft-delete` | manager | share with the agency, change owner, delete |
+| `GET .../{id}/history` | visible | change log |
+| `GET /api/v1/properties/similar`, `/stats` | logged in | possible duplicates, dashboard counts |
+| `GET /api/v1/vocab` | public | controlled lists with Persian and English labels |
+| `GET /api/v1/geo/provinces`, `/cities`, `/districts` | logged in | provinces, cities, districts used by the agency |
+
+Money is whole Toman; dates are ISO (Gregorian); areas are numbers. Province and city data comes from
+`alembic/data/` (MIT licence, see the notice there).
+
 ## Migrations (Alembic)
 ```bash
 alembic revision --autogenerate -m "add files table"   # then READ the generated file
@@ -73,11 +92,12 @@ app/
   core/              config (ESKANBAN_* env vars), domain errors
   db/
     base.py          declarative Base + constraint naming
-    models/          Agency, User, AuthSession (+ mixins: Id, Timestamp, Tenant)
+    models/          Agency, User, AuthSession, Property*, Province, City (+ mixins)
     session.py       engine, session factories (tenant / system / unscoped)
     tenancy.py       automatic tenant scoping + write guard
     url.py           normalises postgres:// URLs for SQLAlchemy + psycopg 3
-  services/          business rules (agencies.py: agencies/users, auth.py: login/sessions/passwords)
+  services/          business rules (agencies.py, auth.py, properties.py)
+  domain/vocab.py    controlled lists (deal types, amenities, document types, ...)
   schemas/           request/response models
   api/               deps.py (auth + tenant sessions), errors.py, v1/ routers
   cli.py             operator commands (create-agency, set-password)

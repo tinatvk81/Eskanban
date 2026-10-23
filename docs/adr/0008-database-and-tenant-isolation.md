@@ -27,6 +27,18 @@ and a leak between tenants would be the worst failure the product can have.
 - Every new tenant table needs an isolation test; the existing tests were mutation-checked (they fail if scoping is removed).
 - Tests need a real PostgreSQL; CI provides one as a service container.
 
+## Lesson from the Files module (added 2026-10-10)
+Testing the first aggregate query showed that the ORM filter did **not** scope one statement shape:
+`select(func.count().filter(...))` without `select_from(Model)`. A manager of another agency saw a count
+belonging to the first agency. It was fixed, and `tests/test_tenancy_statement_shapes.py` now runs every
+shape we use against an agency that owns nothing (the leaking shape is kept as a strict expected failure).
+
+What this means:
+- Always name the table in aggregates (`select_from(Model)`) and add an explicit `agency_id` condition.
+- The application-level filter is not enough on its own. **Row-level security in PostgreSQL stays the
+  planned second layer** and is now the next hardening step. It needs a database role that is neither
+  superuser nor `BYPASSRLS`; which role the hosting platform gives us is still to be confirmed.
+
 ## Alternatives considered
 Schema-per-tenant or database-per-tenant (stronger isolation, much more operational work for many small agencies);
 RLS only (strong, but depends on database permissions we have not confirmed); async SQLAlchemy (more complexity, no need yet).

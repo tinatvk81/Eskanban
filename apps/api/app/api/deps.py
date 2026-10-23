@@ -4,7 +4,7 @@ from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from app.core.errors import Forbidden, NotAuthenticated
+from app.core.errors import Forbidden, NotAuthenticated, PasswordChangeRequired
 from app.db.models import Role
 from app.db.session import system_session, tenant_session
 from app.services.auth import AuthContext, resolve_token
@@ -30,8 +30,16 @@ def get_auth_context(
     credentials: HTTPAuthorizationCredentials = Depends(get_credentials),
     db: Session = Depends(get_system_db),
 ) -> AuthContext:
+    """Who is calling. Allowed even with a temporary password (needed to change it)."""
     ctx = resolve_token(db, credentials.credentials)
     db.commit()  # persists the sliding-expiry touch, if any
+    return ctx
+
+
+def get_context(ctx: AuthContext = Depends(get_auth_context)) -> AuthContext:
+    """Like get_auth_context, but refuses users who still have to change a temporary password."""
+    if ctx.must_change_password:
+        raise PasswordChangeRequired("change your temporary password first")
     return ctx
 
 
@@ -41,7 +49,13 @@ def get_tenant_db(ctx: AuthContext = Depends(get_auth_context)) -> Iterator[Sess
         yield session
 
 
-def require_manager(ctx: AuthContext = Depends(get_auth_context)) -> AuthContext:
+def get_data_db(ctx: AuthContext = Depends(get_context)) -> Iterator[Session]:
+    """Tenant session for data endpoints (password change already done)."""
+    with tenant_session(ctx.agency_id) as session:
+        yield session
+
+
+def require_manager(ctx: AuthContext = Depends(get_context)) -> AuthContext:
     if ctx.role is not Role.MANAGER:
         raise Forbidden("manager role required")
     return ctx
