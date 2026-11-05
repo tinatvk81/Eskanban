@@ -60,6 +60,5 @@ Next: Files module (field list reconciled with the legacy models; vocabulary reg
 
 ## Open questions
 - Runflare specifics (sub-folder deploys, start/migration commands, versions, proxy headers) — see infra/README.md.
-- Whether to import data from the legacy EXE — decide before Phase 2 ends.
 - SMS provider for codes/reset — before SMS login.
 - Legal review of scraping each external listing source — before Phase 5.

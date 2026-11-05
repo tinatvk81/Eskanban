@@ -25,7 +25,6 @@ Phases are ordered by dependency, not dates. A phase is done only when its exit 
 ## Phase 2 — MVP: Files module
 - Property file CRUD (sale, rent, mortgage, pre-purchase), photos/attachments.
 - Fast filtering, saved filters, search; status lifecycle; contract-expiry tracking; activity log.
-- Open question: import from legacy EXE data.
 - **Exit:** the owner's father's agency can run daily file work on it; list pages load in seconds on old hardware.
 
 ## Phase 3 — Clients and matching
