@@ -11,6 +11,7 @@ Users may buy only the modules they need.
 1. **Files (فایل‌ها)** — all agency property files, filters, saved filters, expiry tracking. **MVP starts here.**
 2. **Accounting (حسابداری)** — commissions, licence-related costs, agent dashboard.
 3. **New listings (فایل‌های جدید)** — intake from external listing sites + lead routing.
+Deferred to the final phases: AI search assistant (replaces legacy chat/bot) and interactive map view.
 
 ## Confirmed features
 Property–Client Matching · Transaction/Deal Pipeline · Agent Commission Dashboard ·
@@ -40,7 +41,7 @@ Commit/push only after the owner accepts (`scripts/ship.sh`). Ask when unsure. (
 
 ## Status
 Phase 0 done except staging. Phase 1: tenants, roles, auth, web shell and login are built; GitHub CI has not run yet.
-Next: Files module (waiting for the field list from the legacy app). Details: docs/roadmap.md.
+Next: Files module (field list reconciled with the legacy models; vocabulary regrouping proposed in ADR-0012). Details: docs/roadmap.md.
 
 ## Decision index
 | ADR | Topic | Status |
@@ -59,7 +60,6 @@ Next: Files module (waiting for the field list from the legacy app). Details: do
 
 ## Open questions
 - Runflare specifics (sub-folder deploys, start/migration commands, versions, proxy headers) — see infra/README.md.
-- Fields of a property file, taken from the legacy app — before Phase 2.
 - Whether to import data from the legacy EXE — decide before Phase 2 ends.
 - SMS provider for codes/reset — before SMS login.
 - Legal review of scraping each external listing source — before Phase 5.

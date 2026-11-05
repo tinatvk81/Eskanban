@@ -8,7 +8,7 @@ Phases are ordered by dependency, not dates. A phase is done only when its exit 
 | 0 Foundation | Done, except the Runflare staging environment (needs the owner's account) |
 | 1 Platform skeleton | Built and tested locally: tenants, roles, auth, app shell, i18n, themes, CI definition. Open: first CI run on GitHub, staging deploy, branch-protection ruleset |
 | 2 Files (MVP) | Backend built (model, API, tests); web screens next |
-| 3–7 | Not started |
+| 3–8 | Not started
 
 ## Phase 0 — Foundation
 - Repo, docs, ADRs, hooks, changelog (this commit set).
@@ -44,7 +44,12 @@ Phases are ordered by dependency, not dates. A phase is done only when its exit 
 - Public advisor and agency pages; per-seat plans and billing; white-label on top plan.
 
 ## Phase 7 — AI / agents (future)
+- Web-search assistant (replaces the legacy chat/bot): answers advisor questions by searching the internet. Lives in apps/agents.
 - Deduplication, matching assistants, data-quality helpers in `apps/agents`.
+
+  ## Phase 8 — Map view (last)
+  - Interactive map of files and areas. The plain `location_url` map-link field stays in Phase 2.
+  - **Exit:** an advisor can see filtered files on a map.
 
 ## Risks
 | Risk | Mitigation |

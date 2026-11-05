@@ -23,7 +23,7 @@ occupancy and vacate date, per-file history, Jalali dates by default.
 - Fields that do not belong to the deal type are cleared on save; for sale and presale the missing one of
   total / per-m2 is computed from the area.
 - Areas: `land_area_m2` (عرصه) and `built_area_m2` (زیربنا); `main_area_m2` (built, else land) is generated.
-- Also: property types (array, several allowed), floor, total floors, total units, Jalali build year,
+- Also: property types (array, several allowed), floor, total floors, total units .rooms (bedroom count, with min/max filter), Jalali build year,
   direction + corner flag, amenities (controlled keys) + free custom amenities, document type + note,
   ownership in dang (1–6, default 6), occupancy + vacate date, owner name and phone, contract end date,
   presale delivery date and payment terms, urgent flag with optional end date, notes, map link.
