@@ -64,6 +64,9 @@ TRACKED_FIELDS = (
     "document_type",
     "document_note",
     "ownership_dang",
+    "is_divided",
+    "deed_scope",
+    "ownership_kind",
     "occupancy",
     "vacate_date",
     "owner_name",
@@ -441,6 +444,11 @@ class PropertyFilters:
     directions: list[str] = field(default_factory=list)
     is_corner: bool | None = None
     document_types: list[str] = field(default_factory=list)
+    deed_scopes: list[str] = field(default_factory=list)
+    ownership_kinds: list[str] = field(default_factory=list)
+    is_divided: bool | None = None
+    min_dang: int | None = None
+    max_dang: int | None = None
     occupancy: list[str] = field(default_factory=list)
     amenities_all: list[str] = field(default_factory=list)
     amenities_none: list[str] = field(default_factory=list)
@@ -525,6 +533,7 @@ def _apply_filters(stmt: Select, actor: AuthContext, f: PropertyFilters) -> Sele
         (Property.price_per_m2, f.min_price_per_m2, f.max_price_per_m2),
         (Property.deposit, f.min_deposit, f.max_deposit),
         (Property.monthly_rent, f.min_rent, f.max_rent),
+        (Property.ownership_dang, f.min_dang, f.max_dang),
     )
     for column, low, high in ranges:
         if low is not None:
@@ -537,6 +546,12 @@ def _apply_filters(stmt: Select, actor: AuthContext, f: PropertyFilters) -> Sele
         stmt = stmt.where(Property.is_corner.is_(f.is_corner))
     if f.document_types:
         stmt = stmt.where(Property.document_type.in_(f.document_types))
+    if f.deed_scopes:
+        stmt = stmt.where(Property.deed_scope.in_(f.deed_scopes))
+    if f.ownership_kinds:
+        stmt = stmt.where(Property.ownership_kind.in_(f.ownership_kinds))
+    if f.is_divided is not None:
+        stmt = stmt.where(Property.is_divided.is_(f.is_divided))
     if f.occupancy:
         stmt = stmt.where(Property.occupancy.in_(f.occupancy))
     if f.amenities_all:

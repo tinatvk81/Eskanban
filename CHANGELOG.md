@@ -12,3 +12,4 @@ versioning: [SemVer](https://semver.org/).
 - Mobile-number login, revocable sessions, team management endpoints and operator CLI.
 - Web login, forced password change and dashboard pages (cookie-based sessions through the web server).
 - Property files backend: data model, filters, visibility, history, favorites, geography data and vocabularies.
+- Document dimensions for property files (migration 0004): official/informal document types, deed scope, ownership kind (freehold/waqf), divided flag and dang filters.

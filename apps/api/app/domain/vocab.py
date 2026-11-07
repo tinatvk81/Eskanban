@@ -92,11 +92,24 @@ OCCUPANCY = _items(
 )
 
 DOCUMENT_TYPES = _items(
+    ("official", "سند رسمی", "Official deed"),
     ("tak_barg", "سند تک‌برگ", "Single-sheet deed"),
     ("mangoole_dar", "سند منگوله‌دار (دفترچه‌ای)", "Booklet deed"),
-    ("qolnameh", "قولنامه‌ای / سند عادی", "Informal contract (no official deed)"),
-    ("waqfi", "وقفی (اوقافی)", "Endowment (waqf)"),
+    ("informal", "سند عادی / قولنامه‌ای", "Informal document (contract only)"),
     ("other", "سایر", "Other"),
+)
+
+# What the deed covers: land and building, or only one of them.
+DEED_SCOPES = _items(
+    ("land_and_building", "عرصه و اعیان", "Land and building"),
+    ("land_only", "فقط عرصه", "Land only"),
+    ("building_only", "فقط اعیان", "Building only"),
+)
+
+# Legal kind of ownership: free (tolq) or endowment (waqf).
+OWNERSHIP_KINDS = _items(
+    ("freehold", "طلق (آزاد)", "Freehold"),
+    ("waqf", "وقفی", "Endowment (waqf)"),
 )
 
 SORT_FIELDS = ("created_at", "updated_at", "price", "area", "contract_end_date")
@@ -119,4 +132,6 @@ ALL = {
     "directions": DIRECTIONS,
     "occupancy": OCCUPANCY,
     "document_types": DOCUMENT_TYPES,
+    "deed_scopes": DEED_SCOPES,
+    "ownership_kinds": OWNERSHIP_KINDS,
 }

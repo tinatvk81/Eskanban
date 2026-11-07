@@ -59,7 +59,10 @@ class PropertyFields(BaseModel):
 
     document_type: str | None = None
     document_note: str | None = Field(default=None, max_length=200)
-    ownership_dang: int = Field(default=6, ge=1, le=6)
+    ownership_dang: int = Field(default=6, ge=1, le=6)  # 6 = full ownership; less = shared
+    is_divided: bool | None = None  # None = unknown
+    deed_scope: str | None = None
+    ownership_kind: str | None = None
 
     occupancy: str | None = None
     vacate_date: date | None = None
@@ -126,6 +129,20 @@ class PropertyFields(BaseModel):
     def _document_type(cls, v: str | None) -> str | None:
         if v is not None and v not in vocab.keys(vocab.DOCUMENT_TYPES):
             raise ValueError("unknown document type")
+        return v
+
+    @field_validator("deed_scope")
+    @classmethod
+    def _deed_scope(cls, v: str | None) -> str | None:
+        if v is not None and v not in vocab.keys(vocab.DEED_SCOPES):
+            raise ValueError("unknown deed scope")
+        return v
+
+    @field_validator("ownership_kind")
+    @classmethod
+    def _ownership_kind(cls, v: str | None) -> str | None:
+        if v is not None and v not in vocab.keys(vocab.OWNERSHIP_KINDS):
+            raise ValueError("unknown ownership kind")
         return v
 
     @field_validator("location_url")
@@ -204,6 +221,9 @@ class PropertyOut(BaseModel):
     document_type: str | None
     document_note: str | None
     ownership_dang: int
+    is_divided: bool | None
+    deed_scope: str | None
+    ownership_kind: str | None
     occupancy: str | None
     vacate_date: date | None
 
