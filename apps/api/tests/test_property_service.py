@@ -462,6 +462,10 @@ def test_other_agencies_never_see_or_touch_files(db, world):
         "amenities = ARRAY['helipad']::varchar[]",
         "property_types = ARRAY['castle']::varchar[]",
         "ownership_dang = 7",
+        "document_type = 'qolnameh'",  # renamed to 'informal' in migration 0004
+        "document_type = 'waqfi'",  # moved to ownership_kind = 'waqf'
+        "deed_scope = 'roof'",
+        "ownership_kind = 'rented'",
         "price_total = -1",
         "build_year = 900",
         "direction = 'up'",
@@ -500,6 +504,9 @@ def catalog(db, world):
             direction="south",
             amenities=["elevator", "parking"],
             document_type="tak_barg",
+            deed_scope="land_and_building",
+            ownership_kind="freehold",
+            is_divided=True,
             occupancy="vacant",
             price_total=5_000_000_000,
             address="بلوار وکیل آباد",
@@ -517,6 +524,10 @@ def catalog(db, world):
             is_corner=True,
             amenities=["pool", "yard"],
             document_type="mangoole_dar",
+            deed_scope="land_and_building",
+            ownership_kind="freehold",
+            is_divided=False,
+            ownership_dang=3,
             occupancy="owner_occupied",
             price_total=20_000_000_000,
             address="بلوار سجاد",
@@ -529,7 +540,9 @@ def catalog(db, world):
             rooms=None,
             price_total=None,
             price_per_m2=30_000_000,
-            document_type="qolnameh",
+            document_type="informal",
+            deed_scope="land_only",
+            ownership_kind="waqf",
             address="جاده قوچان",
         ),
         "rent_a": dict(
@@ -609,7 +622,20 @@ def _find(db, world, ctx=None, **filters):
         ({"max_build_year": 1390}, {"villa"}),
         ({"directions": ["north"]}, {"villa"}),
         ({"is_corner": True}, {"villa"}),
-        ({"document_types": ["tak_barg", "qolnameh"]}, {"flat", "land"}),
+        ({"document_types": ["tak_barg", "informal"]}, {"flat", "land"}),
+        ({"deed_scopes": ["land_only"]}, {"land"}),
+        ({"deed_scopes": ["land_and_building"]}, {"flat", "villa"}),
+        ({"deed_scopes": ["land_only", "building_only"]}, {"land"}),
+        ({"ownership_kinds": ["waqf"]}, {"land"}),
+        ({"ownership_kinds": ["freehold"]}, {"flat", "villa"}),  # unknown (NULL) never matches
+        ({"is_divided": True}, {"flat"}),
+        ({"is_divided": False}, {"villa"}),  # unknown (NULL) is neither
+        ({"max_dang": 5}, {"villa"}),
+        ({"min_dang": 3, "max_dang": 3}, {"villa"}),
+        (
+            {"min_dang": 6},
+            {"flat", "land", "rent_a", "rent_b", "mortgage", "presale", "tehran"},
+        ),
         ({"occupancy": ["vacant", "tenant_occupied"]}, {"flat", "rent_a"}),
         ({"amenities_all": ["elevator", "parking"]}, {"flat"}),
         ({"amenities_all": ["elevator"]}, {"flat", "rent_a"}),
@@ -825,3 +851,23 @@ def test_district_suggestions_come_from_the_agency_itself(db, world, make_agency
         assert svc.suggest_districts(s, city_id=c, query="سج") == ["سجاد"]
     with tenant_session(world["other_aid"], engine=db) as s:
         assert svc.suggest_districts(s, city_id=c, query=None) == []
+
+
+def test_document_dimensions_are_stored_and_tracked_in_history(db, world):
+    pid = _create(db, world, world["adv1"])
+    with _sess(db, world) as s:
+        before = svc.get_property(s, world["adv1"], pid)
+        values = {name: getattr(before, name) for name in svc.TRACKED_FIELDS}
+        values.update(deed_scope="land_only", ownership_kind="waqf", is_divided=True)
+        svc.update_property(s, world["adv1"], pid, values, expected_version=before.version)
+        s.commit()
+    with _sess(db, world) as s:
+        after = svc.get_property(s, world["adv1"], pid)
+        assert (after.deed_scope, after.ownership_kind, after.is_divided) == (
+            "land_only",
+            "waqf",
+            True,
+        )
+        entry, _ = svc.list_history(s, world["adv1"], pid)[0]
+        assert entry.action == "update"
+        assert set(entry.changes) == {"deed_scope", "ownership_kind", "is_divided"}

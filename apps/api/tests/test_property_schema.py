@@ -22,6 +22,11 @@ def test_minimal_payload_is_valid_and_defaults_apply():
         {"direction": "up"},
         {"occupancy": "squatters"},
         {"document_type": "napkin"},
+        {"document_type": "qolnameh"},  # renamed to "informal"
+        {"document_type": "waqfi"},  # now ownership_kind = "waqf"
+        {"deed_scope": "roof"},
+        {"ownership_kind": "rented"},
+        {"is_divided": "maybe"},
         {"ownership_dang": 7},
         {"ownership_dang": 0},
         {"build_year": 1100},
@@ -69,3 +74,23 @@ def test_convertible_options_are_validated():
     assert ok.convertible_options[0].monthly_rent == 3
     with pytest.raises(ValidationError):
         PropertyCreate(**_base(convertible_options=[{"deposit": -1, "monthly_rent": 3}]))
+
+
+def test_document_dimensions_default_to_unknown_and_accept_valid_values():
+    p = PropertyCreate(**_base())
+    assert p.is_divided is None and p.deed_scope is None and p.ownership_kind is None
+    p = PropertyCreate(
+        **_base(
+            document_type="official",
+            deed_scope="land_and_building",
+            ownership_kind="waqf",
+            is_divided=False,
+            ownership_dang=4,
+        )
+    )
+    assert (p.document_type, p.deed_scope, p.ownership_kind, p.is_divided) == (
+        "official",
+        "land_and_building",
+        "waqf",
+        False,
+    )

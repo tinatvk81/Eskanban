@@ -287,6 +287,47 @@ def test_list_pagination_filters_and_sorting(client, team, city_ids):
     assert amenity["total"] == 0
 
 
+def test_document_dimensions_round_trip_and_filter_over_http(client, team, city_ids):
+    m = city_ids["mashhad"]
+    a = create(
+        client,
+        team["adv1"],
+        m,
+        document_type="official",
+        deed_scope="land_and_building",
+        ownership_kind="freehold",
+        is_divided=True,
+    )
+    b = create(
+        client, team["adv1"], m, deed_scope="land_only", ownership_kind="waqf", ownership_dang=3
+    )
+    c = create(client, team["adv1"], m)  # everything unknown
+    assert (a["deed_scope"], a["ownership_kind"], a["is_divided"]) == (
+        "land_and_building",
+        "freehold",
+        True,
+    )
+    assert (c["deed_scope"], c["ownership_kind"], c["is_divided"]) == (None, None, None)
+
+    def ids(**params):
+        res = client.get(BASE, headers=auth(team["adv1"]), params=params)
+        assert res.status_code == 200, res.text
+        return {i["id"] for i in res.json()["items"]}
+
+    assert ids(deed_scope="land_only") == {b["id"]}
+    assert ids(deed_scope=["land_only", "land_and_building"]) == {a["id"], b["id"]}
+    assert ids(ownership_kind="waqf") == {b["id"]}
+    assert ids(is_divided="true") == {a["id"]}
+    assert ids(max_dang=5) == {b["id"]}
+    assert ids(min_dang=6) == {a["id"], c["id"]}
+    assert ids(document_type="official") == {a["id"]}
+
+    # Invalid values are 422 for bodies and for query bounds.
+    bad = client.post(BASE, headers=auth(team["adv1"]), json=body(m, deed_scope="roof"))
+    assert bad.status_code == 422
+    assert client.get(BASE, headers=auth(team["adv1"]), params={"min_dang": 7}).status_code == 422
+
+
 def test_query_parameter_validation(client, team):
     h = auth(team["adv1"])
     assert client.get(BASE + "?page_size=500", headers=h).status_code == 422
@@ -377,6 +418,8 @@ def test_vocab_is_public_and_complete(client):
         "directions",
         "occupancy",
         "document_types",
+        "deed_scopes",
+        "ownership_kinds",
     }
     assert {i["key"] for i in data["deal_types"]} == {"sale", "presale", "rent", "mortgage"}
     assert len(data["property_types"]) == 13

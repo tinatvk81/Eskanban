@@ -92,6 +92,9 @@ class Property(IdMixin, TimestampMixin, TenantMixin, Base):
     document_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
     document_note: Mapped[str | None] = mapped_column(String(200), nullable=True)
     ownership_dang: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default="6")
+    is_divided: Mapped[bool | None] = mapped_column(Boolean, nullable=True)  # NULL = unknown
+    deed_scope: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    ownership_kind: Mapped[str | None] = mapped_column(String(10), nullable=True)
 
     # --- occupancy ---
     occupancy: Mapped[str | None] = mapped_column(String(20), nullable=True)
@@ -166,6 +169,15 @@ class Property(IdMixin, TimestampMixin, TenantMixin, Base):
         CheckConstraint(
             f"document_type IS NULL OR document_type IN ({vocab.sql_list(vocab.DOCUMENT_TYPES)})",
             name="document_type_valid",
+        ),
+        CheckConstraint(
+            f"deed_scope IS NULL OR deed_scope IN ({vocab.sql_list(vocab.DEED_SCOPES)})",
+            name="deed_scope_valid",
+        ),
+        CheckConstraint(
+            "ownership_kind IS NULL OR "
+            f"ownership_kind IN ({vocab.sql_list(vocab.OWNERSHIP_KINDS)})",
+            name="ownership_kind_valid",
         ),
         CheckConstraint("ownership_dang BETWEEN 1 AND 6", name="dang_valid"),
         CheckConstraint(

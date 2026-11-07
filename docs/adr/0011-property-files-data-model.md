@@ -29,8 +29,20 @@ occupancy and vacate date, per-file history, Jalali dates by default.
   presale delivery date and payment terms, urgent flag with optional end date, notes, map link.
 - Controlled lists (`app/domain/vocab.py`, served by `GET /api/v1/vocab` with Persian and English labels)
   are enforced by CHECK constraints. Changing a list means editing vocab.py and adding a migration.
-- Document types: single-sheet deed, booklet deed, informal contract, endowment (waqf), other. The list
-  should be confirmed against what the agency actually writes.
+- Document info is split into independent dimensions (migration 0004), because the agencies' own words
+  mix several different questions: what kind of paper it is, how much of the property it covers, whether
+  the share is whole, whether the plot is divided, and whether the land is free or endowed.
+  - `document_type`: official, single-sheet (tak-barg), booklet (mangoole-dar), informal (contract only), other.
+  - `ownership_dang` (1–6): 6 = full ownership; below 6 = shared (the UI shows it as "mosha'").
+  - `is_divided` (nullable boolean): divided / not divided / unknown.
+  - `deed_scope`: land and building / land only / building only.
+  - `ownership_kind`: freehold (tolq) or endowment (waqf).
+  Unknown is NULL everywhere and never matches a filter value. Waqf is an ownership kind, not a document
+  type: migration 0004 turned old `waqfi` files into `ownership_kind = 'waqf'` with no document type, and
+  `qolnameh` into `informal`. The downgrade is lossy by nature (`official` becomes `other`; a waqf file's
+  document type is replaced by `waqfi`). The list is a proposal from one agency's wording and should be
+  confirmed with real advisors, especially the meaning of "mosha'", "mafroz" and the document subject.
+  Filters: `document_type`, `deed_scope`, `ownership_kind`, `is_divided`, `min_dang`, `max_dang`.
 
 **Visibility.** A manager sees every file of the agency; an advisor sees own files plus files a manager
 shared with the agency (read-only for them). Soft-deleted files (manager only) are invisible to everyone.
