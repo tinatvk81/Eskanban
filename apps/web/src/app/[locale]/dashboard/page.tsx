@@ -4,6 +4,7 @@ import { Topbar } from "@/components/Topbar";
 import { isLocale } from "@/i18n/config";
 import { getMessages } from "@/i18n/getMessages";
 import { getCurrentUser } from "@/lib/session";
+import Link from "next/link";
 
 export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -53,6 +54,10 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
           <strong>{agency.seat_limit}</strong>
         </div>
       </section>
+
+      <p>
+        <Link href={`/${locale}/files`}>{t.files.title}</Link>
+      </p>
 
       <p className="phase">{t.dashboard.comingSoon}</p>
     </main>
