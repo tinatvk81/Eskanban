@@ -1,11 +1,15 @@
-from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-
+from fastapi import APIRouter, Depends, Query
+from fastapi.responses import JSONResponse
+from sqlalchemy import select
 from app.api.deps import get_context, get_data_db
 from app.domain import vocab
 from app.services import properties as svc
 from app.services.auth import AuthContext
+from app.db.models import City, Province
+from app.db.models import City, Province
+
 
 router = APIRouter(tags=["reference"])
 
@@ -56,19 +60,73 @@ def search_cities(
     province_id: int | None = None,
     q: str | None = Query(default=None, max_length=80),
     limit: int = Query(default=30, ge=1, le=100),
+    offset: int = Query(default=0, ge=0, le=1000000),
     _: AuthContext = Depends(get_context),
     db: Session = Depends(get_data_db),
 ) -> list[CityOut]:
-    rows = svc.search_cities(db, province_id=province_id, query=q, limit=limit)
-    return [CityOut(id=c.id, name=c.name, province_id=p.id, province_name=p.name) for c, p in rows]
+    rows = svc.search_cities(
+        db,
+        province_id=province_id,
+        query=q,
+        limit=limit,
+        offset=offset,
+    )
 
+    return [
+        CityOut(
+            id=city.id,
+            name=city.name,
+            province_id=province.id,
+            province_name=province.name,
+        )
+        for city, province in rows
+    ]
+
+
+@router.get("/geo/cities/{city_id}", response_model=CityOut)
+def get_city(
+    city_id: int,
+    _: AuthContext = Depends(get_context),
+    db: Session = Depends(get_data_db),
+) -> CityOut | JSONResponse:
+    row = db.execute(
+        select(City, Province)
+        .join(Province, Province.id == City.province_id)
+        .where(City.id == city_id)
+    ).first()
+
+    if row is None:
+        return JSONResponse(
+            status_code=404,
+            content={
+                "error": {
+                    "code": "city_not_found",
+                    "message": "unknown city",
+                }
+            },
+        )
+
+    city, province = row
+    return CityOut(
+        id=city.id,
+        name=city.name,
+        province_id=province.id,
+        province_name=province.name,
+    )
 
 @router.get("/geo/districts", response_model=list[str])
 def suggest_districts(
     city_id: int,
     q: str | None = Query(default=None, max_length=80),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0, le=1000000),
     _: AuthContext = Depends(get_context),
     db: Session = Depends(get_data_db),
 ) -> list[str]:
-    """Districts this agency already used in that city (for autocomplete)."""
-    return svc.suggest_districts(db, city_id=city_id, query=q)
+    return svc.suggest_districts(
+        db,
+        city_id=city_id,
+        query=q,
+        limit=limit,
+        offset=offset,
+    )

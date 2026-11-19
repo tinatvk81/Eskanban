@@ -1,4 +1,4 @@
-# Authentication rules (ADR-0009)
+# Authentication rules
 
 - Request handling uses `Depends(get_tenant_db)`; it opens a tenant session from the token's agency.
 - `get_system_db` / `system_session()` are for login, token lookup, the operator CLI and workers only.

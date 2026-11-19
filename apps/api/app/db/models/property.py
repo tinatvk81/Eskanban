@@ -34,7 +34,7 @@ def _array_check(column: str, items: tuple[vocab.Item, ...]) -> str:
 
 
 class Property(IdMixin, TimestampMixin, TenantMixin, Base):
-    """A property file (ADR-0011). Prices are whole Toman."""
+    """A property file. Prices are whole Toman."""
 
     __tablename__ = "properties"
 

@@ -1,31 +1,79 @@
-/* Design tokens — source of truth: docs/context/design-system.md */
+/* apps/web/src/styles/tokens.css — single shared token set */
 :root {
   color-scheme: dark;
-  --bg: #14141f;
-  --surface: #1e1e2e;
-  --text: #e8e6e3;
-  --text-muted: #a9a7b3;
-  --border: #33334a;
-  --accent: #daa520;
-  --on-accent: #14141f;
+
+  /* surfaces */
+  --bg: #040508;
+  --bg-alt: #0b0d12;          /* alternating sections */
+  --surface: #11141b;
+  --surface-raised: #181c25;
+  --border: #1e222c;          /* decorative dividers */
+  --border-strong: #636b80;   /* form-field borders (>= 3:1) */
+
+  /* text */
+  --text: #f4f5f8;
+  --text-muted: #9a9fae;
+
+  /* brand (gold) */
+  --accent: #daa520;          /* fill / border only in light */
   --accent-hover: #b8860b;
-  --accent-text: #daa520;
+  --accent-text: #daa520;     /* text/links/focus; darker in light */
+  --on-accent: #14141f;
+  --accent-soft: rgba(218, 165, 32, 0.14);
+  --gradient-gold: linear-gradient(180deg, #f5d47a 0%, #daa520 50%, #8a6508 100%);
+
+  /* status */
   --success: #34d399;
   --danger: #f87171;
+
+  /* shape */
   --radius: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* type */
+  --font-sans: "Vazirmatn Variable", system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+  --tracking: 0; /* Persian: never letter-space */
+
+  /* layout */
+  --container-narrow: 880px;  /* login, dashboard, forms */
+  --container-wide: 1440px;   /* landing, /files */
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+  --header-h: 64px;           /* sticky offset for filters */
+  --tap: 44px;                /* min touch target */
+
+  /* focus */
+  --focus-ring: 3px solid var(--accent-text);
+
+  /* motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 150ms;
+  --dur-reveal: 600ms;
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #f7f5f0;
+
+  --bg: #f3f3f6;
+  --bg-alt: #ffffff;
   --surface: #ffffff;
-  --text: #1f1f2b;
+  --surface-raised: #ffffff;
+  --border: #dcdce3;
+  --border-strong: #80838f;
+
+  --text: #0b0c10;
   --text-muted: #5b5a66;
-  --border: #dedad0;
-  --accent: #daa520;
-  --on-accent: #14141f;
+
+  --accent: #daa520;          /* NEVER as text on light */
   --accent-hover: #b8860b;
-  --accent-text: #8a6508;
+  --accent-text: #8a6508;     /* text-safe gold */
+  --on-accent: #14141f;
+  --accent-soft: rgba(218, 165, 32, 0.18);
+
   --success: #15803d;
   --danger: #b91c1c;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur-reveal: 0ms; }
 }

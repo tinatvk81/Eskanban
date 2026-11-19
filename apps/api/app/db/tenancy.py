@@ -1,4 +1,4 @@
-"""Tenant isolation (ADR-0005, ADR-0008).
+"""Tenant isolation.
 
 A session has one of three scopes, stored in ``session.info``:
 
@@ -9,7 +9,7 @@ A session has one of three scopes, stored in ``session.info``:
 * no scope      – fail closed: tenant tables return no rows and refuse writes.
 
 This is application-level protection. PostgreSQL row-level security is planned as a second
-layer (see ADR-0008).
+layer (see tenant isolation rules).
 """
 
 import uuid

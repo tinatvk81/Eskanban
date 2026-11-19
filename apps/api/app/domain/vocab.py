@@ -1,4 +1,4 @@
-"""Controlled vocabularies for property files (ADR-0011).
+"""Controlled vocabularies for property files.
 
 The keys are stored in the database (enforced by CHECK constraints); labels are for display only.
 Add a value by editing this file AND adding a migration that updates the matching CHECK constraint.

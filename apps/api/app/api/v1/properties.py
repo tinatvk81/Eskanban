@@ -48,6 +48,12 @@ def _serialize(db: Session, actor: AuthContext, props: list[Property]) -> list[P
                     id=city.id, name=city.name, province_id=province.id, province_name=province.name
                 ),
                 "can_edit": svc.can_edit(actor, p),
+                "owner_name": (
+                    p.owner_name if svc.can_view_owner_contact(actor, p) else None
+                ),
+                "owner_phone": (
+                    p.owner_phone if svc.can_view_owner_contact(actor, p) else None
+                ),
                 "is_favorite": p.id in favorites,
                 "is_urgent_now": svc.is_urgent_now(p, today),
             }
@@ -302,13 +308,23 @@ def history(
     ctx: AuthContext = Depends(get_context),
     db: Session = Depends(get_data_db),
 ) -> list[HistoryOut]:
-    return [
-        HistoryOut(
-            id=h.id,
-            user=PersonRef(id=u.id, full_name=u.full_name),
-            action=h.action,
-            changes=h.changes,
-            created_at=h.created_at,
+    prop = svc.get_property(db, ctx, property_id)
+    can_view_contact = svc.can_view_owner_contact(ctx, prop)
+
+    result = []
+    for h, u in svc.list_history(db, ctx, property_id):
+        changes = dict(h.changes or {})
+        if not can_view_contact:
+            changes.pop("owner_name", None)
+            changes.pop("owner_phone", None)
+
+        result.append(
+            HistoryOut(
+                id=h.id,
+                user=PersonRef(id=u.id, full_name=u.full_name),
+                action=h.action,
+                changes=changes,
+                created_at=h.created_at,
+            )
         )
-        for h, u in svc.list_history(db, ctx, property_id)
-    ]
+    return result

@@ -1,4 +1,4 @@
-"""Business rules for property files (ADR-0011). Services flush; the caller commits.
+"""Business rules for property files. Services flush; the caller commits.
 
 Visibility: a manager sees every file of the agency; an advisor sees their own files and the ones a
 manager shared with the agency. Soft-deleted files are invisible to everyone. Invisible, foreign and
@@ -120,6 +120,10 @@ def _load_visible(session: Session, actor: AuthContext, property_id: uuid.UUID) 
 
 
 def can_edit(actor: AuthContext, prop: Property) -> bool:
+    return _is_manager(actor) or prop.owner_user_id == actor.user_id
+
+
+def can_view_owner_contact(actor: AuthContext, prop: Property) -> bool:
     return _is_manager(actor) or prop.owner_user_id == actor.user_id
 
 
@@ -760,31 +764,69 @@ def stats(session: Session, actor: AuthContext) -> dict[str, Any]:
 
 # ----------------------------------------------------------------------------- geography helpers
 def search_cities(
-    session: Session, *, province_id: int | None, query: str | None, limit: int = 30
+    session: Session,
+    *,
+    province_id: int | None,
+    query: str | None,
+    limit: int = 30,
+    offset: int = 0,
 ) -> list[tuple[City, Province]]:
-    stmt = select(City, Province).join(Province, Province.id == City.province_id)
+    stmt = select(City, Province).join(
+        Province, Province.id == City.province_id
+    )
+
     if province_id is not None:
         stmt = stmt.where(City.province_id == province_id)
+
     if query:
         stmt = stmt.where(
-            City.name_normalized.like(f"{_like_escape(normalize_text(query))}%", escape="\\")
+            City.name_normalized.like(
+                f"{_like_escape(normalize_text(query))}%",
+                escape="\\",
+            )
         )
-    rows = session.execute(stmt.order_by(City.name).limit(min(limit, 100))).all()
-    return [(r[0], r[1]) for r in rows]
 
+    rows = session.execute(
+        stmt
+        .order_by(City.name, City.id)
+        .offset(offset)
+        .limit(min(limit, 100))
+    ).all()
+
+    return [(row[0], row[1]) for row in rows]
 
 def suggest_districts(
-    session: Session, *, city_id: int, query: str | None, limit: int = 20
+    session: Session,
+    *,
+    city_id: int,
+    query: str | None,
+    limit: int = 20,
+    offset: int = 0,
 ) -> list[str]:
     """Districts already used by this agency in that city (autocomplete)."""
+
     _require_tenant(session)
+
     stmt = select(Property.district).where(
-        Property.city_id == city_id, Property.district.is_not(None), Property.deleted_at.is_(None)
+        Property.city_id == city_id,
+        Property.district.is_not(None),
+        Property.deleted_at.is_(None),
     )
+
     if query:
         stmt = stmt.where(
-            _district_key().like(f"{_like_escape(normalize_text(query))}%", escape="\\")
+            _district_key().like(
+                f"{_like_escape(normalize_text(query))}%",
+                escape="\\",
+            )
         )
+
     return list(
-        session.scalars(stmt.group_by(Property.district).order_by(func.count().desc()).limit(limit))
+        session.scalars(
+            stmt
+            .group_by(Property.district)
+            .order_by(func.count().desc(), Property.district.asc())
+            .offset(offset)
+            .limit(min(limit, 100))
+        )
     )

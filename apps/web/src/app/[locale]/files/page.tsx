@@ -10,12 +10,17 @@ import { getMessages } from "@/i18n/getMessages";
 import { apiFetch } from "@/lib/api";
 import { errorText } from "@/lib/errorText";
 import { formatNumber } from "@/lib/format";
-import { buildApiQuery, parseFilters } from "@/lib/propertyQuery";
+import { buildApiQuery, filesHref, parseFilters } from "@/lib/propertyQuery";
 import type { PropertyList, VocabMap } from "@/lib/propertyTypes";
 import { getCurrentUser, getSessionToken } from "@/lib/session";
 
 type SearchParams = Record<string, string | string[] | undefined>;
-
+type CityOption = {
+  id: number;
+  name: string;
+  province_id: number;
+  province_name: string;
+};
 export default async function FilesPage({
   params,
   searchParams,
@@ -42,12 +47,36 @@ export default async function FilesPage({
   const token = (await getSessionToken()) ?? undefined;
   const filters = parseFilters(await searchParams);
 
-  const [list, vocabResult] = await Promise.all([
-    apiFetch<PropertyList>(`/api/v1/properties?${buildApiQuery(filters)}`, { token }),
-    apiFetch<VocabMap>("/api/v1/vocab", { token }),
-  ]);
+  const [list, vocabResult, cityResult] = await Promise.all([
+  apiFetch<PropertyList>(
+    `/api/v1/properties?${buildApiQuery(filters)}`,
+    { token },
+  ),
+
+  apiFetch<VocabMap>("/api/v1/vocab", { token }),
+
+  filters.city
+    ? apiFetch<CityOption>(
+        `/api/v1/geo/cities/${filters.city}`,
+        { token },
+      )
+    : Promise.resolve(null),
+]);
+
+const vocab: VocabMap = vocabResult.ok ? vocabResult.data : {};
+
+const initialCity =
+  cityResult?.ok
+    ? cityResult.data
+    : null;
+
+
   if (!list.ok && list.status === 401) redirect(`/${locale}/login`);
-  const vocab: VocabMap = vocabResult.ok ? vocabResult.data : {};
+
+  // A page number past the end (an old link, or filters that shrank the list) shows the last page.
+  if (list.ok && list.data.items.length === 0 && filters.page > list.data.total_pages && list.data.total_pages > 0) {
+    redirect(filesHref(locale, filters, list.data.total_pages));
+  }
 
   return (
     <main className="container files-page">
@@ -56,8 +85,13 @@ export default async function FilesPage({
       </Topbar>
 
       <h1>{t.files.title}</h1>
-      <FilesFilterForm locale={locale} t={t} filters={filters} vocab={vocab} />
-
+      <FilesFilterForm
+        locale={locale}
+        t={t}
+        filters={filters}
+        vocab={vocab}
+        initialCity={initialCity}
+      />
       {!list.ok ? (
         <p className="alert" role="alert">
           {list.status === 503 ? t.errors.unavailable : errorText(t, list.error.code, list.retryAfter)}

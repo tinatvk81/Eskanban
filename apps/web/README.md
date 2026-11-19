@@ -1,7 +1,7 @@
 # apps/web
 
 Next.js (App Router, TypeScript) frontend. Persian-first (RTL) with English, light/dark themes.
-The browser talks only to this server; the server talks to the API (ADR-0010).
+The browser talks only to this server. Server-side code communicates with the API through the server-side API client and BFF route handlers.
 
 ## Run locally
 ```bash
@@ -28,9 +28,13 @@ Create a user first with `python -m app.cli create-agency ...` in `apps/api`, th
 | `/[locale]` | Landing page and system status |
 | `/[locale]/login` | Mobile number + password |
 | `/[locale]/change-password` | Required after a temporary password |
-| `/[locale]/dashboard` | Signed-in home (placeholder until the Files module) |
+| `/[locale]/dashboard` | Signed-in home; statistics API is not yet integrated |
+| `/[locale]/files` | Property-file list, filters and pagination |
+| `/[locale]/files/[id]` | Property details, history and property actions |
 | `/api/auth/login`, `/logout`, `/change-password` | Route handlers (BFF) that call the API and manage the cookie |
 | `/api/health` | Backend readiness for the status card |
+| `/api/properties/[id]/[action]` | Same-origin BFF route for property mutations; forwards validated actions to the API |
+| `/api/geo/*` | Same-origin BFF routes for geography/reference data |
 
 ## Structure
 ```

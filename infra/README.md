@@ -1,6 +1,6 @@
 # infra
 
-Deployment notes for Runflare (native stack, no custom Dockerfile for now — ADR-0004).
+Deployment notes for Runflare (native stack, no custom Dockerfile for now).
 
 ## Services (planned)
 | Service | Source | Start command | Port |
@@ -35,5 +35,5 @@ Deployment notes for Runflare (native stack, no custom Dockerfile for now — AD
 - [ ] Whether the web service can reach the api over the platform's private network or only its public URL.
 - [ ] Which proxy headers carry the real client IP (for per-IP rate limiting later).
 - [ ] Free-plan limits: development/testing only; use a paid plan with backups for real agency data.
-- [ ] Whether Playwright browsers can run on the platform (Phase 5; may require Docker, see ADR-0004).
-Record the answers here, and in an ADR if they change a decision.
+- [ ] Whether Playwright browsers can run on the platform (Phase 5; may require Docker).
+Record the answers here and update docs/context/project-context.md or docs/roadmap.md when they affect project direction.

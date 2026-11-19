@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildApiQuery, parseFilters, uiQuery } from "./propertyQuery";
+import { buildApiQuery, filesHref, parseFilters, uiQuery } from "./propertyQuery";
 
 describe("parseFilters", () => {
   it("normalizes Persian digits and trims the search text", () => {
@@ -37,5 +37,54 @@ describe("uiQuery", () => {
   it("is empty for defaults and keeps only changed values", () => {
     expect(uiQuery(parseFilters({}))).toBe("");
     expect(uiQuery(parseFilters({ q: "x", deal: "sale", page: "3" }))).toBe("q=x&deal=sale&page=3");
+  });
+});
+
+describe("filesHref", () => {
+  it("builds the list URL and drops default values", () => {
+    const f = parseFilters({});
+    expect(filesHref("fa", f)).toBe("/fa/files");
+    expect(filesHref("en", f, 3)).toBe("/en/files?page=3");
+  });
+
+  it("keeps changed filters when moving to another page", () => {
+    const f = parseFilters({ deal: "rent", urgent: "1" });
+    expect(filesHref("fa", f, 2)).toBe("/fa/files?deal=rent&urgent=1&page=2");
+  });
+});
+
+
+describe("geography filters", () => {
+  it("parses city ID and district", () => {
+    const f = parseFilters({
+      city: "۱۲۳",
+      district: "  سجاد  ",
+    });
+
+    expect(f.city).toBe("123");
+    expect(f.district).toBe("سجاد");
+  });
+
+  it("maps geography filters to API parameters", () => {
+    const f = parseFilters({
+      city: "123",
+      district: "سجاد",
+    });
+
+    const p = new URLSearchParams(buildApiQuery(f));
+
+    expect(p.get("city_id")).toBe("123");
+    expect(p.get("district")).toBe("سجاد");
+  });
+
+  it("preserves geography filters in page URLs", () => {
+    const f = parseFilters({
+      city: "123",
+      district: "سجاد",
+    });
+
+    expect(filesHref("fa", f, 2)).toBe(
+      "/fa/files?page=2&city=123&district=%D8%B3%D8%AC%D8%A7%D8%AF",
+    );
   });
 });

@@ -44,7 +44,7 @@ def get_context(ctx: AuthContext = Depends(get_auth_context)) -> AuthContext:
 
 
 def get_tenant_db(ctx: AuthContext = Depends(get_auth_context)) -> Iterator[Session]:
-    """Session limited to the caller's agency (ADR-0005/0008). Endpoints commit explicitly."""
+    """Session limited to the caller's agency. Endpoints commit explicitly."""
     with tenant_session(ctx.agency_id) as session:
         yield session
 
