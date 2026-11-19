@@ -1,15 +1,14 @@
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from app.api.deps import get_context, get_data_db
+from app.db.models import City, Province
 from app.domain import vocab
 from app.services import properties as svc
 from app.services.auth import AuthContext
-from app.db.models import City, Province
-from app.db.models import City, Province
-
 
 router = APIRouter(tags=["reference"])
 
