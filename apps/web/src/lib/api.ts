@@ -11,7 +11,7 @@ export type ApiResult<T> =
   | { ok: true; status: number; data: T; retryAfter: number | null }
   | { ok: false; status: number; error: ApiErrorBody["error"]; retryAfter: number | null };
 
-type Options = { method?: "GET" | "POST"; token?: string; body?: unknown };
+type Options = { method?: "GET" | "POST" | "PUT"; token?: string; body?: unknown };
 
 export function parseRetryAfter(value: string | null): number | null {
   if (!value) return null;

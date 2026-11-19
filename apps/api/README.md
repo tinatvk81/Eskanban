@@ -1,6 +1,6 @@
 # apps/api
 
-FastAPI (Python) backend with PostgreSQL. Multi-tenant: tenant = agency (ADR-0005, ADR-0008).
+FastAPI (Python) backend with PostgreSQL. Multi-tenant: tenant = agency.
 
 ## Local database (development only — the password below is for local use)
 You need PostgreSQL 14+ on your machine. Easiest on this project's setup (WSL Ubuntu):
@@ -63,7 +63,8 @@ Everything below needs a login without a pending password change (otherwise `403
 | `POST .../{id}/favorite` | logged in | toggle your personal star |
 | `POST .../{id}/share`, `/reassign`, `/soft-delete` | manager | share with the agency, change owner, delete |
 | `GET .../{id}/history` | visible | change log |
-| `GET /api/v1/properties/similar`, `/stats` | logged in | possible duplicates, dashboard counts |
+| `GET /api/v1/properties/stats` | logged in | dashboard counts (Frontend integration pending) |
+| `GET /api/v1/properties/similar` | logged in | Similar Search; currently deferred for security review and must not be exposed or extended |
 | `GET /api/v1/vocab` | public | controlled lists with Persian and English labels |
 | `GET /api/v1/geo/provinces`, `/cities`, `/districts` | logged in | provinces, cities, districts used by the agency |
 

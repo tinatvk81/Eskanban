@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Guarded "accept to ship": review -> accept -> commit -> push (-> open PR).
 # Nothing is committed or pushed until you answer "y". Hooks still run on commit.
-# Reasoning: docs/adr/0002-git-workflow-and-versioning.md
+# Workflow rules: .claude/rules/git-workflow.md.
 #
 # Usage: bash scripts/ship.sh "type(scope): description" [--pr]
 #   --pr   also open a pull request with GitHub CLI (gh), using the PR template

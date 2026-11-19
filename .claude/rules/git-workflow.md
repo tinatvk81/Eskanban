@@ -1,4 +1,4 @@
-# Git workflow rules (summary of ADR-0002)
+# Git workflow rules
 
 - Header: `<type>(<scope>)!: <description>` — max 72 chars, imperative mood, no trailing period.
 - Types: feat, fix, docs, refactor, perf, test, build, ci, chore, style, revert.

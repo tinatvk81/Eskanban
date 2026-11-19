@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages/types";
 import { formatArea, formatToman, labelOf } from "@/lib/format";
@@ -43,7 +44,7 @@ export function FilesTable({ rows, vocab, locale, t }: Props) {
               <td data-label={f.columns.kind}>
                 <span className="files-badge">{labelOf(vocab.deal_types, row.deal_type, locale)}</span>
                 <div>
-                  {row.property_types.map((k) => labelOf(vocab.property_types, k, locale)).join("، ")}
+                  <Link href={`/${locale}/files/${row.id}`} className="files-link">{row.property_types.map((k) => labelOf(vocab.property_types, k, locale)).join("، ")}</Link>
                 </div>
               </td>
               <td data-label={f.columns.location}>

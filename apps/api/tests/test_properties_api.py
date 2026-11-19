@@ -124,6 +124,32 @@ def test_sharing_flow_over_http(client, team, city_ids):
 
     seen = client.get(f"{BASE}/{f['id']}", headers=auth(team["adv2"]))
     assert seen.status_code == 200 and seen.json()["can_edit"] is False
+    # The file owner and Manager may see owner contact information.
+    owner_detail = client.get(f"{BASE}/{f['id']}", headers=auth(team["adv1"]))
+    manager_detail = client.get(f"{BASE}/{f['id']}", headers=auth(team["manager"]))
+    assert owner_detail.status_code == manager_detail.status_code == 200
+
+    for response in (owner_detail, manager_detail):
+        assert response.json()["owner_name"] == f["owner_name"]
+        assert response.json()["owner_phone"] == f["owner_phone"]
+
+    # A shared Advisor may see the file, but not the owner's contact information.
+    assert seen.json()["owner_name"] is None
+    assert seen.json()["owner_phone"] is None
+
+    owner_list = client.get(BASE, headers=auth(team["adv1"])).json()["items"]
+    manager_list = client.get(BASE, headers=auth(team["manager"])).json()["items"]
+    shared_list = client.get(BASE, headers=auth(team["adv2"])).json()["items"]
+
+    for items in (owner_list, manager_list):
+        item = next(item for item in items if item["id"] == f["id"])
+        assert item["owner_name"] == f["owner_name"]
+        assert item["owner_phone"] == f["owner_phone"]
+
+    shared_item = next(item for item in shared_list if item["id"] == f["id"])
+    assert shared_item["owner_name"] is None
+    assert shared_item["owner_phone"] is None
+
     put = client.put(
         f"{BASE}/{f['id']}",
         headers=auth(team["adv2"]),
@@ -240,7 +266,76 @@ def test_history_endpoint(client, team, city_ids):
         history[0]["changes"]["rooms"] == {"from": 2, "to": 5}
         and history[0]["user"]["full_name"] == "Advisor One"
     )
-    assert client.get(f"{BASE}/{f['id']}/history", headers=auth(team["adv2"])).status_code == 404
+    assert client.get(
+        f"{BASE}/{f['id']}/history", headers=auth(team["adv2"])
+    ).status_code == 404
+
+
+def test_shared_advisor_history_hides_owner_contacts_without_mutating_storage(
+    client, team, city_ids, db
+):
+    f = create(client, team["adv1"], city_ids["mashhad"])
+
+    shared = client.post(
+        f"{BASE}/{f['id']}/share",
+        headers=auth(team["manager"]),
+        json={"shared": True},
+    )
+    assert shared.status_code == 200
+
+    updated = client.put(
+        f"{BASE}/{f['id']}",
+        headers=auth(team["adv1"]),
+        json=body(city_ids["mashhad"], rooms=5)
+        | {
+            "owner_name": "خانم رضایی",
+            "owner_phone": "09123334455",
+            "version": shared.json()["version"],
+        },
+    )
+    assert updated.status_code == 200
+
+    owner_history = client.get(
+        f"{BASE}/{f['id']}/history", headers=auth(team["adv1"])
+    )
+    manager_history = client.get(
+        f"{BASE}/{f['id']}/history", headers=auth(team["manager"])
+    )
+    shared_history = client.get(
+        f"{BASE}/{f['id']}/history", headers=auth(team["adv2"])
+    )
+
+    assert owner_history.status_code == 200
+    assert manager_history.status_code == 200
+    assert shared_history.status_code == 200
+
+    for response in (owner_history, manager_history):
+        changes = response.json()[0]["changes"]
+        assert "owner_name" in changes
+        assert "owner_phone" in changes
+        assert changes["rooms"] == {"from": 2, "to": 5}
+
+    shared_changes = shared_history.json()[0]["changes"]
+    assert "owner_name" not in shared_changes
+    assert "owner_phone" not in shared_changes
+    assert shared_changes["rooms"] == {"from": 2, "to": 5}
+
+    # Response filtering must not mutate the persisted JSONB audit record.
+    with db.connect() as connection:
+        stored_changes = connection.exec_driver_sql(
+            """
+            SELECT changes
+            FROM property_history
+            WHERE property_id = %s::uuid AND action = 'update'
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (uuid.UUID(f["id"]),),
+        ).scalar_one()
+
+    assert "owner_name" in stored_changes
+    assert "owner_phone" in stored_changes
+    assert stored_changes["rooms"] == {"from": 2, "to": 5}
 
 
 # ------------------------------------------------------------ lists, filters, favorites
@@ -448,6 +543,32 @@ def test_geo_endpoints(client, team, city_ids):
     assert client.get("/api/v1/geo/provinces").status_code == 401
 
 
+    city_detail = client.get(
+        f"/api/v1/geo/cities/{city_ids['mashhad']}",
+        headers=h,
+    )
+
+    assert city_detail.status_code == 200
+
+    city_data = city_detail.json()
+
+    assert city_data["id"] == city_ids["mashhad"]
+    assert city_data["name"] == "مشهد"
+    assert city_data["province_name"] == "خراسان رضوی"
+
+    missing_city = client.get(
+        "/api/v1/geo/cities/999999999",
+        headers=h,
+    )
+
+    assert missing_city.status_code == 404
+    assert missing_city.json()["error"]["code"] == "city_not_found"
+
+    unauthenticated_city = client.get(
+        f"/api/v1/geo/cities/{city_ids['mashhad']}",
+    )
+
+    assert unauthenticated_city.status_code == 401
 # ------------------------------------------------------------ temporary-password gate
 def test_temporary_password_blocks_data_endpoints_but_not_account_endpoints(
     client, make_agency, city_ids, db

@@ -29,6 +29,8 @@ export type FileFilters = {
   fav: boolean;
   sort: string;
   page: number;
+  city: string; // city ID
+district: string;
 };
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -58,6 +60,8 @@ export function parseFilters(raw: RawParams): FileFilters {
     fav: first(raw.fav) === "1",
     sort: oneOf(SORTS, first(raw.sort)) ?? "created_at:desc",
     page: Math.max(1, Number.parseInt(digits(first(raw.page), 6) || "1", 10)),
+    city: digits(first(raw.city), 10),
+    district: (first(raw.district) ?? "").trim().slice(0, 80),
   };
 }
 
@@ -77,6 +81,8 @@ export function buildApiQuery(f: FileFilters): string {
   if (f.rmax) p.set("max_rooms", f.rmax);
   if (f.urgent) p.set("urgent_only", "true");
   if (f.fav) p.set("favorites_only", "true");
+  if (f.city) p.set("city_id", f.city);
+  if (f.district) p.set("district", f.district);
   const [sortBy, order] = f.sort.split(":");
   p.set("sort_by", sortBy);
   p.set("order", order);
@@ -101,5 +107,13 @@ export function uiQuery(f: FileFilters, page: number = f.page): string {
   if (f.fav) p.set("fav", "1");
   if (f.sort !== "created_at:desc") p.set("sort", f.sort);
   if (page > 1) p.set("page", String(page));
+  if (f.city) p.set("city", f.city);
+  if (f.district) p.set("district", f.district);
   return p.toString();
+}
+
+/** Page URL for the files list; `page` defaults to the one inside the filters. */
+export function filesHref(locale: string, f: FileFilters, page: number = f.page): string {
+  const qs = uiQuery(f, page);
+  return `/${locale}/files${qs ? `?${qs}` : ""}`;
 }

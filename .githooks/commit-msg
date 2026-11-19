@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Enforce the Conventional Commits 1.0.0 header with this project's profile.
-# Reasoning: docs/adr/0002-git-workflow-and-versioning.md
+# Commit format: Conventional Commits; see .claude/rules/git-workflow.md.
 set -euo pipefail
 
 header=$(head -n1 "$1")
@@ -21,7 +21,7 @@ commit-msg: header does not follow Conventional Commits.
   expected: <type>(<scope>)!: <description>
   types:    ${types//|/, }
   example:  feat(files): add saved filter presets
-See docs/adr/0002-git-workflow-and-versioning.md
+See .claude/rules/git-workflow.md
 MSG
   exit 1
 fi

@@ -1,4 +1,4 @@
-# Web rules (ADR-0006, ADR-0010)
+# Web rules
 
 - The browser never calls the FastAPI backend. Use route handlers in `src/app/api/` (server-side `apiFetch`).
 - Never put tokens in `localStorage`, `sessionStorage`, URLs, logs or response bodies.

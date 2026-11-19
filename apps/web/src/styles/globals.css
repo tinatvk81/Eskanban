@@ -233,3 +233,86 @@ a {
 .brand {
   text-decoration: none;
 }
+
+/* ---------- Marketing / Landing ---------- */
+
+.marketing-page {
+  /* Landing always uses dark colors,
+     independently from the saved app theme. */
+
+  color-scheme: dark;
+
+  --bg: #040508;
+  --bg-alt: #0b0d12;
+  --surface: #11141b;
+  --surface-raised: #181c25;
+  --border: #1e222c;
+  --border-strong: #636b80;
+
+  --text: #f4f5f8;
+  --text-muted: #9a9fae;
+
+  --accent: #daa520;
+  --accent-hover: #b8860b;
+  --accent-text: #daa520;
+  --on-accent: #14141f;
+  --accent-soft: rgba(218, 165, 32, 0.14);
+
+  --success: #34d399;
+  --danger: #f87171;
+
+  min-height: 100vh;
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding: clamp(1rem, 4vw, 2.5rem);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.marketing-page .topbar {
+  margin-block-end: 5rem;
+}
+
+.marketing-page .hero {
+  max-width: 760px;
+  margin-block-end: 4rem;
+}
+
+.marketing-page .hero h1 {
+  line-height: 1.4;
+}
+
+.marketing-page .hero p {
+  line-height: 1.9;
+}
+
+.marketing-page .card {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.marketing-page .topbar .brand {
+  color: var(--accent-text);
+}
+
+.marketing-page .topbar .btn {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.marketing-page .topbar .btn:hover {
+  border-color: var(--accent);
+}
+
+@media (max-width: 600px) {
+  .marketing-page .topbar {
+    margin-block-end: 3rem;
+    flex-wrap: wrap;
+  }
+
+  .marketing-page .actions {
+    flex-wrap: wrap;
+  }
+}

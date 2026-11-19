@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   pr-title:
-    # PRs are squash-merged, so the PR title becomes the commit message (ADR-0002).
+    # PRs are squash-merged, so the PR title becomes the commit message.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:

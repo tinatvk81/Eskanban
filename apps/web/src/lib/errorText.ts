@@ -17,6 +17,14 @@ export function errorText(
       return t.errors.weakPassword;
     case "wrong_password":
       return t.errors.wrongPassword;
+    case "forbidden":
+      return t.errors.forbidden;
+    case "version_conflict":
+      return t.errors.versionConflict;
+    case "property_not_found":
+      return t.errors.notFound;
+    case "user_not_found":
+      return t.errors.userNotFound;
     case "unavailable":
       return t.errors.unavailable;
     default:

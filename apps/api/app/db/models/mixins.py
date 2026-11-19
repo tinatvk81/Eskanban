@@ -19,7 +19,7 @@ class TimestampMixin:
 
 
 class TenantMixin:
-    """Marks a table as owned by exactly one agency (ADR-0005, ADR-0008).
+    """Marks a table as owned by exactly one agency.
 
     Every model with this mixin is automatically filtered and guarded by the tenant
     session scope (see app/db/tenancy.py). New tenant-owned tables MUST use it.
