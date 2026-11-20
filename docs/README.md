@@ -3,6 +3,7 @@
 | Doc | Purpose |
 |---|---|
 | [roadmap.md](roadmap.md) | Phased plan, exit criteria, risks |
+| [testing.md](testing.md) | Test commands, requirements and test index |
 | [context/project-context.md](context/project-context.md) | Single source of truth (read first) |
 | [context/design-system.md](context/design-system.md) | Brand colors, light/dark tokens, accessibility |
 | [sources/](sources/README.md) | External references the decisions rely on |

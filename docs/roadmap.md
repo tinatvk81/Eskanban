@@ -143,3 +143,240 @@ Update this section after each feature slice with the actual files changed, test
 - The former numbered decision-record workflow is retired and will not be continued or replaced.
 - Preserve practical rules and constraints in `.claude/rules/` and `docs/context/project-context.md`.
 - Keep implementation progress, verification results, risks, and pending decisions in this Roadmap. Update the existing project context when enduring product or technical rules change.
+
+---
+
+## Execution Checklist — Operational Workflow
+
+This section is the central execution checklist. Use it to decide what to work on next.
+The existing phase descriptions, verification findings, security constraints and historical
+test results above remain part of the project record.
+
+### Status definitions
+
+| Status | Meaning |
+|---|---|
+| `[ ]` | Not started |
+| `[~]` | In progress |
+| `[x]` | Implemented and acceptance criteria verified with evidence |
+| `[!]` | Blocked or a defect needs investigation |
+| `[-]` | Intentionally deferred |
+
+Do not mark a task `[x]` merely because code exists. Verify its acceptance criteria and
+record the actual test evidence first.
+
+### Working agreement
+
+1. Start each session by checking the current branch and `git status`.
+2. Read this checklist and the latest Session Handoff.
+3. Inspect only the relevant implementation, API contract and tests for the current task.
+4. Implement one coordinated Backend + Frontend + tests + documentation slice.
+5. Run focused tests first; run integration and regression tests at the appropriate milestones.
+6. Record findings, decisions, changed files, test commands/results and remaining risks here.
+7. Preserve unrelated user changes. Never reset, clean, overwrite or commit unrelated files.
+8. Do not commit, push, merge or change branches without explicit approval.
+
+### Test strategy
+
+- **Feature tests:** Run the smallest relevant test group while implementing a feature.
+- **Integration tests:** Verify the interaction between Backend endpoints, Frontend BFF/routes
+  and UI behavior at integration boundaries.
+- **Full regression:** Run the complete Backend and Frontend test suites at the end of a
+  meaningful phase or before a release/merge.
+- Test commands, environment requirements and the test-file index belong in `docs/testing.md`.
+- Do not rely on historical test counts as proof that the current checkout passes.
+- Never run tests against a development or valuable database. The Backend test fixture can
+  downgrade its configured target database during teardown.
+
+### Phase 2 — Files MVP execution checklist
+
+#### F1 — Detail, History and Actions verification
+
+Goal: verify the existing implementation end-to-end before adding new Files functionality.
+
+**Backend**
+- [x] Detail serialization and owner-contact authorization reviewed.
+- [x] History response filtering reviewed; persisted JSONB remains unchanged.
+- [x] Property action authorization reviewed.
+- [x] Focused property API tests passed (historical evidence: 23 passed).
+- [x] Full Backend suite passed (historical evidence: 304 passed, 1 xfailed).
+- API areas:
+  - `GET /properties/{id}`
+  - `GET /properties/{id}/history`
+  - Existing status, favorite, share, reassign and delete actions.
+
+**Frontend**
+- [x] Detail page and component exist.
+- [x] History component exists.
+- [x] Property actions component exists.
+- [x] Property action BFF route has direct route tests (historical evidence: 10 passed).
+- [~] Direct component tests for `PropertyDetail`, `PropertyHistory` and `PropertyActions`.
+- [ ] Verify role-dependent UI behavior for Manager and Advisor.
+- [ ] Verify detail-page loading, error, unavailable-history and empty-history states.
+- [ ] Verify action success, failure, busy state and refresh/redirect behavior.
+- [ ] Verify owner-contact display against Backend responses for Manager, assigned Advisor
+  and shared non-assigned Advisor.
+- [ ] Verify page-level integration of detail, history, vocab and Manager-only user data.
+
+**Relevant implementation**
+- Backend:
+  - `apps/api/app/api/routes/properties.py`
+  - `apps/api/app/services/properties.py`
+  - `apps/api/app/schemas/property.py` (verify the current schema path before editing)
+- Frontend:
+  - `apps/web/src/app/[locale]/files/[id]/page.tsx`
+  - `apps/web/src/components/.../PropertyDetail.tsx` (verify exact current path)
+  - `apps/web/src/components/.../PropertyHistory.tsx` (verify exact current path)
+  - `apps/web/src/components/.../PropertyActions.tsx` (verify exact current path)
+  - `apps/web/src/app/api/properties/[id]/[action]/route.ts`
+- Tests:
+  - `apps/api/tests/test_properties_api.py`
+  - `apps/api/tests/test_property_service.py`
+  - `apps/web/src/app/api/properties/[id]/[action]/route.test.ts`
+  - `apps/web/src/lib/propertyActions.test.ts`
+  - `apps/web/src/lib/propertyDetail.test.ts`
+  - Add component/page tests in the matching Frontend directories.
+
+**Acceptance criteria**
+- Backend remains the enforcement boundary for authorization and owner-contact privacy.
+- Shared Advisors who are not assigned never receive owner contact values.
+- Manager-only actions are unavailable to Advisors in the UI and rejected by Backend.
+- Detail and history states are understandable and do not silently hide failures.
+- Successful actions update or navigate to the correct state.
+- Relevant component/page integration tests pass.
+
+**Current state:** `[~]` Existing implementation and Backend/BFF coverage are present; direct UI and
+page integration verification remain.
+
+#### F2 — Create property form
+
+- [ ] Inspect and document the current create API schema and validation rules.
+- [ ] Confirm Manager/Advisor ownership rules and geography/reference-data contract.
+- [ ] Implement the Frontend create form and its BFF/API interaction.
+- [ ] Handle field validation, API errors, loading and successful navigation/feedback.
+- [ ] Add Backend tests only for uncovered behavior or discovered defects.
+- [ ] Add Frontend form and route tests.
+- [ ] Update this checklist with exact changed paths and test evidence.
+
+API: `POST /properties`
+
+Acceptance criteria:
+- Advisor-created files belong to that Advisor.
+- Manager can create a file for an active Advisor.
+- Invalid data is reported clearly.
+- Successful creation navigates to or displays the new file.
+- Backend authorization and validation are tested.
+
+#### F3 — Edit property form
+
+- [ ] Inspect the current update API, schema and version-conflict behavior.
+- [ ] Implement the Frontend edit form and BFF/API interaction.
+- [ ] Include the required `version` value.
+- [ ] Handle stale-version conflicts without silently overwriting another user's changes.
+- [ ] Add tests for successful update, validation, authorization and version conflict.
+- [ ] Record changed paths and test evidence.
+
+API: `PUT /properties/{id}`
+
+Acceptance criteria:
+- Only authorized users can edit the file.
+- The current version is sent with the update.
+- A stale version produces a clear conflict state.
+- No silent last-write-wins overwrite is introduced.
+
+#### F4 — Dashboard statistics
+
+- [ ] Inspect the existing statistics response and Dashboard structure.
+- [ ] Connect the existing statistics API to the Dashboard.
+- [ ] Verify tenant scoping and role behavior.
+- [ ] Implement loading, empty and error states.
+- [ ] Add Frontend and integration tests.
+
+API: `GET /properties/stats`
+
+Acceptance criteria:
+- Statistics belong only to the current agency.
+- Dashboard values match the API response.
+- Loading and failure states are handled.
+- No cross-tenant information is exposed.
+
+#### F5 — User management
+
+- [ ] Inspect existing user APIs, schemas, seat limits and authorization.
+- [ ] Implement the Manager-facing user-management UI.
+- [ ] Cover listing, creation, deactivation and password reset.
+- [ ] Verify active-user selection and agency seat constraints.
+- [ ] Add Frontend and integration tests.
+
+Backend reference: `apps/api/app/api/routes/users.py` (verify exact current path).
+
+Acceptance criteria:
+- Only authorized Managers can manage agency users.
+- Seat limits and active-user constraints are enforced by Backend.
+- Deactivation and password reset have clear success/failure feedback.
+- Advisors cannot access Manager-only user-management operations.
+
+#### F6 — Photos and attachments
+
+- [-] Implementation deferred until storage and security design is approved.
+
+Before implementation:
+- [ ] Define storage provider and object lifecycle.
+- [ ] Define upload/download authorization.
+- [ ] Define file-size, content-type and file-count constraints.
+- [ ] Define deletion, replacement and retention behavior.
+- [ ] Define migration and backup implications.
+- [ ] Approve the design before implementation.
+
+Acceptance criteria:
+- Backend authorization protects every upload/download/delete operation.
+- Storage access does not expose private files.
+- Frontend upload, progress, error and deletion states are tested.
+- Storage lifecycle and operational requirements are documented.
+
+### Deferred / restricted scope
+
+- [-] Similar-property search: deferred because of potential information side-channel risk.
+  Do not expose or extend it without a separate product/security decision.
+- [-] English copy polishing and translation refinement: low priority; revisit after core
+  product functionality.
+- [ ] Legacy EXE data import: product decision required before Phase 2 exit.
+- [ ] Runflare staging verification: requires the owner's account and environment access.
+- [ ] GitHub CI first run, staging deployment and branch-protection ruleset: Phase 1 follow-up.
+- [ ] PostgreSQL 18 local / PostgreSQL 16 CI parity: verify before relying on version-specific
+  behavior.
+
+### Phase exit checklist
+
+A phase is not complete until:
+- [ ] All in-scope tasks have evidence-backed status.
+- [ ] Backend and Frontend behavior are aligned.
+- [ ] Relevant feature and integration tests pass.
+- [ ] Full regression suites pass, or remaining failures are explicitly documented and accepted.
+- [ ] Security and tenant-isolation requirements are verified.
+- [ ] Documentation and operational instructions are updated.
+- [ ] Remaining risks and deferred work are recorded.
+
+### Session Handoff
+
+Update this section at the end of each work session.
+
+**Current focus:** F1 — Detail, History and Actions verification.
+
+**Last verified repository state (2026-11-19):**
+- Branch: `master`
+- Local `master` matched `origin/master`.
+- Untracked file: `apps/web/web.rar` — preserve; do not add or commit.
+- Backend historical regression: 304 passed, 1 xfailed, 0 failed.
+- Frontend historical regression: 12 files, 68 tests passed; typecheck passed.
+- BFF property-action route historical tests: 10 passed.
+- These are historical results, not a claim that tests were rerun after this documentation update.
+
+**Next actions:**
+1. Finish F1 direct component and page integration tests.
+2. Run focused Frontend tests and typecheck.
+3. Run relevant Backend tests if implementation changes affect API behavior.
+4. Update F1 status only after acceptance criteria have evidence.
+5. Continue to F2 only after F1 is verified.
+
+**Last updated:** 2026-11-19
