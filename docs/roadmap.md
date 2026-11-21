@@ -265,7 +265,7 @@ Goal: verify the existing implementation end-to-end before adding new Files func
 - [x] Confirm Manager/Advisor ownership rules and geography/reference-data contract. Evidence (2026-11-21): `svc.create_property` — an Advisor passing another `owner_user_id` gets Forbidden; a Manager may target an existing active user, otherwise UserNotFound; the city is resolved from `city_id`; `district` is free text (max 80) suggested by `/api/geo/districts`. Existing API tests cover these rules in `test_properties_api.py`. No Jalali date library exists in `apps/web`, so the first form uses Gregorian `type="date"` inputs.
 - [x] Implement the Frontend create form and its BFF/API interaction. Done (2026-11-21, code + tests + build): validator `propertyCreate.ts`, BFF route `POST /api/properties`, payload builder `propertyForm.ts`, form component `PropertyForm.tsx`, page `[locale]/files/new/page.tsx`, "New file" button on the files list, fa/en messages. Price and date fields depend on the deal type to match `_apply_deal_rules`. `npm --prefix apps/web run build` succeeded and lists `/[locale]/files/new`. Manual browser check (2026-11-21, reported by the owner): a city was picked from the real `CityAutocomplete` list, the hidden `city` input held its id, and the file was created against the running Backend. This is a manual check, not automated E2E.
 - [x] Handle field validation, API errors, loading and successful navigation/feedback. Evidence (2026-11-21, component level): `PropertyForm.test.tsx` (17 tests) covers required-field errors, invalid values, auto-open of a section with an error, 401 to login, 403, generic 422 message, network failure with retry, double-submit guard and navigation to the new file. Also verified manually in a real browser on 2026-11-21 (see the implementation item above).
-- [ ] Add Backend tests only for uncovered behavior or discovered defects.
+- [x] Add Backend tests only for uncovered behavior or discovered defects. Closed 2026-11-21 by the owner's decision: no uncovered Backend behavior or defect was recorded during F2; create behavior is covered by existing tests in `apps/api/tests/test_properties_api.py`.
 - [x] Add Frontend form and route tests. Evidence (2026-11-21): `propertyForm.test.ts` (29), `PropertyForm.test.tsx` (19), BFF `api/properties/route.test.ts` (10), page `files/new/page.test.tsx` (8); all pass. `CityAutocomplete` is mocked in these tests; its real behavior is covered by `CityAutocomplete.select.test.tsx` (2 tests, no mock) and `PropertyForm.integration.test.tsx` (2 tests, real component), plus the manual browser check.
 - [x] Update this checklist with exact changed paths and test evidence. Evidence (2026-11-21): added `apps/web/src/components/CityAutocomplete.select.test.tsx` and `apps/web/src/components/PropertyForm.integration.test.tsx`; the form fix is in `apps/web/src/components/PropertyForm.tsx` and `PropertyForm.test.tsx`. Full Frontend run: 21 files, 220 tests passed; `npm --prefix apps/web run typecheck` passed.
 
@@ -372,10 +372,10 @@ A phase is not complete until:
 
 Update this section at the end of each work session.
 
-**Current focus:** F2 — Create property form is implemented and browser-verified; one item is still open (Backend tests, decision pending). Next: the Edit property form. (F1 verified at component level on 2026-11-21.)
+**Current focus:** F2 — Create property form is implemented, browser-verified and closed. Next: the Edit property form. (F1 verified at component level on 2026-11-21.)
 
 **Last verified repository state (2026-11-21):**
-- Branch `master`; 10 local commits (including the docs commit that closes F2; last test commit `e3e17ec`) are ahead of `origin/master` (`9c42238`) and not pushed.
+- Branch `master`; local commits after `origin/master` (`9c42238`) are not pushed; run `git status -sb` for the current count.
 - No untracked files; the stray `apps/web/web.rar` and the `.bak` files were deleted on 2026-11-21 at the owner's request.
 - Backend full regression (2026-11-21, isolated DB): 305 passed, 1 xfailed, 0 failed.
 - Latest Frontend regression (2026-11-21): 21 files, 220 tests passed; `npm run typecheck` passed.
@@ -389,6 +389,6 @@ Update this section at the end of each work session.
 2. Confirm Backend owner-contact authorization with the existing focused API tests; rerun them only against the isolated test database if new verification is needed.
 3. Review any remaining API/BFF/UI contract gaps and add tests only where evidence identifies a gap.
 4. Update F1 status only when each acceptance criterion has sufficient evidence.
-5. F2 is done except the open Backend-tests item (decision pending). Manual browser check passed (2026-11-21). Next: the Edit property form (required `version`, stale-version conflict handling); get the design approved before implementing.
+5. F2 is closed (the Backend-tests item was closed by the owner's decision). Manual browser check passed (2026-11-21). Next: the Edit property form (required `version`, stale-version conflict handling); get the design approved before implementing.
 
 **Last updated:** 2026-11-21
