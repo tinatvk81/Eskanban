@@ -36,6 +36,7 @@ vi.mock("@/i18n/getMessages", () => ({
   getMessages: () => ({
     errors: { unavailable: "Service unavailable" },
     fileDetail: { back: "Back" },
+    fileForm: { editLink: "Edit" },
     auth: { logout: "Logout" },
   }),
 }));

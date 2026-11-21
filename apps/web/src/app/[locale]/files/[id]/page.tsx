@@ -1,6 +1,7 @@
 import "@/styles/files.css";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { EditLink } from "@/components/EditLink";
 import { LogoutButton } from "@/components/LogoutButton";
 import { PropertyActions, type AdvisorOption } from "@/components/PropertyActions";
 import { PropertyDetail } from "@/components/PropertyDetail";
@@ -73,6 +74,12 @@ export default async function FileDetailPage({
         </p>
       ) : (
         <>
+          <EditLink
+            locale={locale}
+            id={prop.data.id}
+            canEdit={prop.data.can_edit}
+            label={t.fileForm.editLink}
+          />
           <PropertyDetail property={prop.data} vocab={vocab} locale={locale} t={t} />
           <PropertyActions
             locale={locale}

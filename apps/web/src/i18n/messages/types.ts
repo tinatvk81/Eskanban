@@ -219,6 +219,9 @@ export type Messages = {
     save: string;
     saving: string;
     reloadLatest: string;
+    editTitle: string;
+    editIntro: string;
+    editLink: string;
     fixErrors: string;
     invalidInput: string;
     fieldErrors: { required: string; invalid: string; range: string; date: string; url: string };

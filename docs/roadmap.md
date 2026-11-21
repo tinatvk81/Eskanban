@@ -7,7 +7,7 @@ Phases are ordered by dependency, not dates. A phase is done only when its exit 
 |---|---|
 | 0 Foundation | Done, except the Runflare staging environment (needs the owner's account) |
 | 1 Platform skeleton | Built and tested locally: tenants, roles, auth, app shell, i18n, themes, CI definition. Open: first CI run on GitHub, staging deploy, branch-protection ruleset |
-| 2 Files (MVP) | Backend APIs and tests exist. Frontend list, filters, detail, history and property actions are implemented. Create form done (manually browser-verified 2026-11-21). Edit form, Dashboard statistics integration, user-management UI, attachments, and integration/authorization verification remain. Owner-contact privacy remediation is implemented; full backend suite (re-run 2026-11-21): 305 passed, 1 xfailed, 0 failed. |
+| 2 Files (MVP) | Backend APIs and tests exist. Frontend list, filters, detail, history and property actions are implemented. Create form done (manually browser-verified 2026-11-21). Edit page and its edit link are implemented with unit tests (2026-11-22); manual browser verification of the edit flow and the version-conflict scenario is pending. Dashboard statistics integration, user-management UI, attachments, and integration/authorization verification remain. Owner-contact privacy remediation is implemented; full backend suite (re-run 2026-11-21): 305 passed, 1 xfailed, 0 failed. Frontend suite (2026-11-22, slice 5): 281 passed, 0 failed, 27 test files. |
 | 3–7 | Not started |
 
 ## Phase 0 — Foundation

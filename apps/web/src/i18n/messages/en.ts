@@ -222,6 +222,9 @@ export const en: Messages = {
     save: "Save changes",
     saving: "Saving…",
     reloadLatest: "Load newest version",
+    editTitle: "Edit property file",
+    editIntro: "Change what you need and press Save changes.",
+    editLink: "Edit",
     fixErrors: "Please fix the highlighted fields.",
     invalidInput: "The data was not accepted. Check the phone number and the values.",
     fieldErrors: {
