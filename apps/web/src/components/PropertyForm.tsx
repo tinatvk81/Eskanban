@@ -66,6 +66,27 @@ const DATES: Key[] = [
 ];
 const NOTES: Key[] = ["notes"];
 
+// The backend drops fields that do not belong to the deal type anyway. Clearing them here means
+// a stale value typed under another deal type can never block a submit with an invisible error.
+function pruneByDeal(v: FormValues): FormValues {
+  const deal = v.deal_type;
+  const out = { ...v };
+  if (!SALE_LIKE.includes(deal)) {
+    out.price_total = "";
+    out.price_per_m2 = "";
+  }
+  if (!RENT_LIKE.includes(deal)) {
+    out.deposit = "";
+    out.contract_end_date = "";
+  }
+  if (deal !== "rent") out.monthly_rent = "";
+  if (deal !== "presale") {
+    out.delivery_date = "";
+    out.payment_terms = "";
+  }
+  return out;
+}
+
 function Section({ title, open, children }: { title: string; open: boolean; children: ReactNode }) {
   return (
     <details className="files-more" open={open ? true : undefined}>
@@ -105,7 +126,7 @@ export function PropertyForm({ locale, t, vocab, isManager, advisors }: Props) {
     // The city picker keeps its id in a hidden field named "city" and the district in "district".
     const data = new FormData(event.currentTarget);
     const built = buildCreatePayload({
-      ...values,
+      ...pruneByDeal(values),
       city_id: String(data.get("city") ?? ""),
       district: String(data.get("district") ?? ""),
     });
@@ -153,6 +174,33 @@ export function PropertyForm({ locale, t, vocab, isManager, advisors }: Props) {
   };
   const sectionHasError = (keys: Key[]) => keys.some((k) => errors[k] !== undefined);
   const hasErrors = Object.keys(errors).length > 0;
+  const labelOf: Record<string, string> = {
+    deal_type: d.dealType,
+    city_id: t.files.city,
+    price_total: d.price,
+    price_per_m2: d.pricePerM2,
+    deposit: d.deposit,
+    monthly_rent: d.monthlyRent,
+    address: d.address,
+    location_url: d.locationLink,
+    land_area_m2: d.landArea,
+    built_area_m2: d.builtArea,
+    rooms: d.rooms,
+    floor: d.floor,
+    total_floors: d.totalFloors,
+    total_units: d.totalUnits,
+    build_year: d.buildYear,
+    ownership_dang: d.ownershipDang,
+    vacate_date: d.vacateDate,
+    contract_end_date: d.contractEnd,
+    delivery_date: d.deliveryDate,
+    urgent_until: d.urgentUntil,
+    owner_name: d.ownerName,
+    owner_phone: d.ownerPhone,
+  };
+  const failing = Object.keys(errors)
+    .map((k) => labelOf[k] ?? k)
+    .join(locale === "fa" ? "، " : ", ");
 
   const cell = (name: Key, label: string, control: ReactNode, wide = false, hint?: string) => (
     <div className={`files-field form-cell${wide ? " files-field--wide" : ""}`}>
@@ -361,7 +409,7 @@ export function PropertyForm({ locale, t, vocab, isManager, advisors }: Props) {
 
       {hasErrors ? (
         <p className="alert" role="alert">
-          {f.fixErrors}
+          {f.fixErrors} <span>({failing})</span>
         </p>
       ) : null}
       {message ? (

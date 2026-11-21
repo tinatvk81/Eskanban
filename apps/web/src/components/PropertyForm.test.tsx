@@ -296,3 +296,34 @@ describe("PropertyForm deal-type rules (match the backend _apply_deal_rules)", (
     expect(has(f.monthlyRent)).toBe(false);
   });
 });
+
+describe("PropertyForm error summary and deal-type pruning", () => {
+  it("names the failing fields in the summary", async () => {
+    const user = userEvent.setup();
+    renderForm();
+    await fillRequired(user);
+    await user.type(field(fa.fileDetail.fields.price), "abc");
+    await user.click(submitButton());
+
+    const summary = screen
+      .getAllByRole("alert")
+      .find((el) => (el.textContent ?? "").includes(fa.fileForm.fixErrors));
+    expect(summary?.textContent).toContain(fa.fileDetail.fields.price);
+  });
+
+  it("ignores a stale value typed under another deal type", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValue(reply(201, { id: "x" }));
+    renderForm();
+    const dealType = field(fa.fileDetail.fields.dealType);
+
+    await user.selectOptions(dealType, "sale");
+    await user.type(field(fa.fileDetail.fields.price), "abc");
+    await user.selectOptions(dealType, "rent");
+    await user.type(field("city-id"), "12");
+    await user.click(submitButton());
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    expect(sentBody()).toMatchObject({ deal_type: "rent", city_id: 12 });
+  });
+});
