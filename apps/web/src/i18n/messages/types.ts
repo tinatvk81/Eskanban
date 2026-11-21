@@ -203,4 +203,21 @@ export type Messages = {
     working: string;
     done: string;
   };
+  fileForm: {
+    title: string;
+    intro: string;
+    newFile: string;
+    submit: string;
+    submitting: string;
+    cancel: string;
+    choose: string;
+    unknown: string;
+    customAmenities: string;
+    customAmenitiesHint: string;
+    assignTo: string;
+    assignSelf: string;
+    fixErrors: string;
+    invalidInput: string;
+    fieldErrors: { required: string; invalid: string; range: string; date: string; url: string };
+  };
 };

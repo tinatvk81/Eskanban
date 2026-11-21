@@ -182,3 +182,18 @@
 .detail-action { display: grid; gap: 0.5rem; padding-block-end: 1rem; border-block-end: 1px solid var(--border); }
 .detail-action:last-child { border-block-end: 0; padding-block-end: 0; }
 .detail-action-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; }
+
+/* Create form */
+.files-head { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; }
+.files-head h1 { margin: 0; }
+.form-cell { align-content: start; }
+.form-cell > label { color: var(--text-muted); }
+.form-cell textarea {
+  inline-size: 100%; min-block-size: 6rem; font: inherit; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+}
+.form-group { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem; margin: 0; }
+.form-group > legend { color: var(--text-muted); padding-inline: 0.25rem; }
+.files-more > .files-grid { margin-block-start: 0.75rem; }
+.form-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }

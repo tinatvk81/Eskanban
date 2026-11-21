@@ -1,4 +1,5 @@
 import "@/styles/files.css";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { FilesFilterForm } from "@/components/FilesFilterForm";
 import { FilesTable } from "@/components/FilesTable";
@@ -84,7 +85,12 @@ const initialCity =
         <LogoutButton locale={locale} label={t.auth.logout} />
       </Topbar>
 
-      <h1>{t.files.title}</h1>
+      <div className="files-head">
+        <h1>{t.files.title}</h1>
+        <Link href={`/${locale}/files/new`} className="files-btn files-btn--primary">
+          {t.fileForm.newFile}
+        </Link>
+      </div>
       <FilesFilterForm
         locale={locale}
         t={t}
