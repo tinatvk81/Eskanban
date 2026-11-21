@@ -136,6 +136,8 @@ Update it when test files are added, removed or moved.
 | Property create page | `src/app/[locale]/files/new/page.test.tsx` |
 | Property detail/history/actions components | `src/components/f1.components.test.tsx` |
 | Property create form component | `src/components/PropertyForm.test.tsx` |
+| Property create form with the real `CityAutocomplete` | `src/components/PropertyForm.integration.test.tsx` |
+| City selection (real `CityAutocomplete`, no mock) | `src/components/CityAutocomplete.select.test.tsx` |
 | API client | `src/lib/api.test.ts` |
 | Cookie handling | `src/lib/cookie.test.ts` |
 | Error messages | `src/lib/errorText.test.ts`, `src/lib/errorText.actions.test.ts` |
@@ -207,7 +209,7 @@ At phase completion:
 
 - Latest Backend result (2026-11-21, isolated DB): 305 passed, 1 xfailed, 0 failed. Exact counts are kept in `roadmap.md`; re-run before relying on them.
 - One strict xfail is expected: `test_unsafe_shapes_are_documented[count filter without select_from]` in `tests/test_tenancy_statement_shapes.py`. It documents an unscoped query shape that must never be written; if it starts passing, move the shape to `SAFE_SHAPES`.
-- Latest Frontend result (2026-11-21): 19 test files, 216 tests passed; typecheck passed. Re-run before
+- Latest Frontend result (2026-11-21): 21 test files, 220 tests passed; typecheck passed. Re-run before
   relying on it.
 - The Backend suite previously emitted a Starlette TestClient/httpx deprecation warning.
   It was non-blocking; review compatibility before changing dependencies.
