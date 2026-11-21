@@ -48,7 +48,8 @@ Always inspect the target database URL before running tests.
 ```bash
 cd apps/api
 
-# Full Backend suite
+# Full Backend suite. Always set the isolated DB inline, for example:
+# ESKANBAN_TEST_DATABASE_URL='postgresql+psycopg://<user>:<password>@127.0.0.1:5432/<isolated_test_db>' .venv/bin/python -m pytest -q
 pytest -q
 
 # Focused property API tests
@@ -80,7 +81,7 @@ Run from the web directory.
 ```bash
 cd apps/web
 
-# Full Frontend suite
+# Full Frontend suite (from the repo root use: npm --prefix apps/web test)
 npm test
 
 # TypeScript typecheck
@@ -130,6 +131,8 @@ Update it when test files are added, removed or moved.
 | Login BFF | `src/app/api/auth/login/route.test.ts` |
 | Logout BFF | `src/app/api/auth/logout/route.test.ts` |
 | Property action BFF | `src/app/api/properties/[id]/[action]/route.test.ts` |
+| Property detail page | `src/app/[locale]/files/[id]/page.test.tsx` |
+| Property detail/history/actions components | `src/components/f1.components.test.tsx` |
 | API client | `src/lib/api.test.ts` |
 | Cookie handling | `src/lib/cookie.test.ts` |
 | Error messages | `src/lib/errorText.test.ts`, `src/lib/errorText.actions.test.ts` |
@@ -139,8 +142,9 @@ Update it when test files are added, removed or moved.
 | Property detail helpers | `src/lib/propertyDetail.test.ts` |
 | Property query helpers | `src/lib/propertyQuery.test.ts` |
 
-At the last inventory, no `*.test.tsx` files were found. Detail/history/action component
-and page-level tests are still required as recorded in the F1 checklist in `roadmap.md`.
+The Frontend test inventory includes direct component tests and a page-level test for
+`FileDetailPage`. These tests cover selected component behavior and server-page orchestration;
+they do not establish full browser E2E coverage or independently prove Backend authorization.
 
 ## 6. Feature test selection
 
@@ -196,8 +200,9 @@ At phase completion:
 
 ## 9. Known limitations and warnings
 
-- Historical Backend result: 304 passed, 1 xfailed, 0 failed. Re-run before relying on it.
-- Historical Frontend result: 12 test files, 68 tests passed; typecheck passed. Re-run before
+- Latest Backend result (2026-11-21, isolated DB): 305 passed, 1 xfailed, 0 failed. Exact counts are kept in `roadmap.md`; re-run before relying on them.
+- One strict xfail is expected: `test_unsafe_shapes_are_documented[count filter without select_from]` in `tests/test_tenancy_statement_shapes.py`. It documents an unscoped query shape that must never be written; if it starts passing, move the shape to `SAFE_SHAPES`.
+- Latest Frontend result (2026-11-21): 14 test files, 105 tests passed; typecheck passed. Re-run before
   relying on it.
 - The Backend suite previously emitted a Starlette TestClient/httpx deprecation warning.
   It was non-blocking; review compatibility before changing dependencies.

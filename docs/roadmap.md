@@ -7,7 +7,7 @@ Phases are ordered by dependency, not dates. A phase is done only when its exit 
 |---|---|
 | 0 Foundation | Done, except the Runflare staging environment (needs the owner's account) |
 | 1 Platform skeleton | Built and tested locally: tenants, roles, auth, app shell, i18n, themes, CI definition. Open: first CI run on GitHub, staging deploy, branch-protection ruleset |
-| 2 Files (MVP) | Backend APIs and tests exist. Frontend list, filters, detail, history and property actions are implemented. Create/edit forms, Dashboard statistics integration, user-management UI, attachments, and integration/authorization verification remain. Owner-contact privacy remediation is implemented; full backend suite: 304 passed, 1 xfailed, 0 failed. |
+| 2 Files (MVP) | Backend APIs and tests exist. Frontend list, filters, detail, history and property actions are implemented. Create/edit forms, Dashboard statistics integration, user-management UI, attachments, and integration/authorization verification remain. Owner-contact privacy remediation is implemented; full backend suite (re-run 2026-11-21): 305 passed, 1 xfailed, 0 failed. |
 | 3–7 | Not started |
 
 ## Phase 0 — Foundation
@@ -70,7 +70,7 @@ Phases are ordered by dependency, not dates. A phase is done only when its exit 
 |---|---|---|
 | Focused property API tests | Passed | `tests/test_properties_api.py`: 23 passed, 0 failed in 4.21s, using the isolated database `eskanban_test_run_20261119`. Covers Manager, file-owning Advisor, and shared Advisor contact visibility, history masking, and persisted JSONB immutability. |
 | Tenant aggregate query review | Reviewed; no unsafe production shape found | `apps/api/app/services/properties.py`: statistics aggregates explicitly use `.select_from(Property)` and an agency condition. `apps/api/app/services/agencies.py`: user counts explicitly use `.select_from(User)`. The known unsafe shape remains covered by the strict xfail test. |
-| Full backend test suite | Passed with one expected failure | `pytest -q`: 304 passed, 1 xfailed, 0 failed in 17.89s using the isolated database `eskanban_test_run_20261119`. The xfail documents the unsafe `COUNT FILTER` shape without an explicit `FROM`; it remains intentionally excluded from safe query shapes. |
+| Full backend test suite | Passed with one expected failure | `pytest -q`: 305 passed, 1 xfailed, 0 failed in 24.87s (re-run 2026-11-21; previously 304 passed) using the isolated database `eskanban_test_run_20261119`. The xfail documents the unsafe `COUNT FILTER` shape without an explicit `FROM`; it remains intentionally excluded from safe query shapes. |
 | Test database configuration | Confirmed | `tests/conftest.py` reads `ESKANBAN_TEST_DATABASE_URL` from the process environment. The successful run explicitly targeted the isolated test database; do not use a development or valuable database. |
 | PostgreSQL readiness | Confirmed | Local PostgreSQL 18 is available on port 5432. CI currently uses PostgreSQL 16; local/CI version parity remains to be checked. |
 | Starlette TestClient / httpx deprecation warning | Non-blocking | The successful run reports a deprecation warning recommending `httpx2`. Track separately; it did not cause test failures. |
@@ -81,6 +81,9 @@ Phases are ordered by dependency, not dates. A phase is done only when its exit 
 - Tenant query-shape review completed: the known unsafe `COUNT FILTER` shape remains documented as a strict xfail. Production searches found no matching unsafe aggregate query. Property statistics use `.select_from(Property)` and an explicit `Property.agency_id == actor.agency_id` condition; agency user counts use `.select_from(User)`. No production code change was needed.
 - Similar Search remains separately deferred pending a product/security decision.
 - Frontend detail, history and property-action components/routes exist and are wired into the detail page. Their integration, failure handling and role-based behavior still require verification, especially owner-contact visibility and Manager-only actions. Backend authorization and response masking remain the security enforcement boundary.
+- Backend re-run (2026-11-21, isolated DB `eskanban_test_run_20261119`): `pytest -q` gave 305 passed, 1 xfailed, 0 failed (24.87s). The new test `test_reassign_rejects_cross_agency_advisor` passed: a Manager reassigning a file to an Advisor of another agency gets `404 user_not_found` and ownership is unchanged. It closes an API coverage gap; no Tenant Isolation defect was observed.
+- The single xfail is `test_unsafe_shapes_are_documented[count filter without select_from]` (strict, intentional). A production grep for `func.count` / `select_from` found no unsafe shape in `app/`.
+- Frontend re-run (2026-11-21): 14 files, 105 tests passed; `npm --prefix apps/web run typecheck` passed.
 - Update this section as further findings are verified, remediated, and tested.
 
 
@@ -125,7 +128,11 @@ Each feature must be completed as a Backend + Frontend + tests + documentation s
 ### Verification notes
 
 - Frontend unit tests previously passed: 11 test files, 58 tests; `npm run typecheck` passed.
-- Frontend verification after F1 action-route tests: `npm test` passed with 12 test files and 68 tests; `npm run typecheck` passed.
+- Frontend verification after F1 action-route tests: `npm test` passed with 12 test files and 68 tests; `npm run typecheck` passed. This is historical evidence.
+- Latest Frontend verification (2026-11-21): focused `page.test.tsx` passed (10 tests); full `npm --prefix apps/web test` passed (14 files, 105 tests); `npm --prefix apps/web run typecheck` passed; `git diff --check` passed.
+- The latest Frontend suite includes 23 component tests in `f1.components.test.tsx` and 10 server-page tests in `[locale]/files/[id]/page.test.tsx`.
+- The page tests cover authentication redirects, forced password-change redirect, Manager/Advisor branching for agency-user loading, active-advisor filtering, detail/history rendering, history failure and empty states, property API 401/404/503 handling, and current-user API unavailability.
+- These page tests mock the child components and API/session dependencies. They verify page orchestration and passed props, not browser rendering of the real child components or live API integration.
 - `git diff --check` passed after the test addition.
 - Vite emitted a non-blocking warning about ESM syntax in `vitest.config.ts` under `configLoader: 'native'`. No configuration change was made because all tests passed.
 - Backend suite previously passed: 304 passed, 1 xfailed, 0 failed, using the isolated database `eskanban_test_run_20261119`.
@@ -199,7 +206,7 @@ Goal: verify the existing implementation end-to-end before adding new Files func
 - [x] History response filtering reviewed; persisted JSONB remains unchanged.
 - [x] Property action authorization reviewed.
 - [x] Focused property API tests passed (historical evidence: 23 passed).
-- [x] Full Backend suite passed (historical evidence: 304 passed, 1 xfailed).
+- [x] Full Backend suite passed (2026-11-21: 305 passed, 1 xfailed).
 - API areas:
   - `GET /properties/{id}`
   - `GET /properties/{id}/history`
@@ -210,24 +217,26 @@ Goal: verify the existing implementation end-to-end before adding new Files func
 - [x] History component exists.
 - [x] Property actions component exists.
 - [x] Property action BFF route has direct route tests (historical evidence: 10 passed).
-- [~] Direct component tests for `PropertyDetail`, `PropertyHistory` and `PropertyActions`.
-- [ ] Verify role-dependent UI behavior for Manager and Advisor.
-- [ ] Verify detail-page loading, error, unavailable-history and empty-history states.
-- [ ] Verify action success, failure, busy state and refresh/redirect behavior.
-- [ ] Verify owner-contact display against Backend responses for Manager, assigned Advisor
-  and shared non-assigned Advisor.
-- [ ] Verify page-level integration of detail, history, vocab and Manager-only user data.
+- [x] Direct component test suite exists for `PropertyDetail`, `PropertyHistory` and `PropertyActions` (`f1.components.test.tsx`: 23 tests passed in the latest full Frontend run).
+- [x] Verify role-dependent UI behavior. Component tests cover Advisor without edit permission (favorite only), Manager actions, Advisor with edit permission (status only, no manager-only actions) and Manager without `canEdit`; page tests cover Manager/Advisor data-loading branches (2026-11-21).
+- [x] Verify detail-page authentication, unavailable, property API error, unavailable-history and empty-history states at the server-page orchestration boundary (`page.test.tsx`: 10 tests passed).
+- [x] Verify Favorite success, Network failure, busy state, 401 login redirect, and successful delete navigation (`f1.components.test.tsx`).
+- [x] Verify Status, Share and Reassign request payloads (`f1.components.test.tsx`).
+- [x] Complete action outcome coverage: success + `router.refresh` assertions for Status, Share and Reassign; non-401 HTTP failure without refresh; delete cancel and delete failure; null deal date for non-closed status; disabled submit when status or advisor is unchanged (2026-11-21, `f1.components.test.tsx`).
+- [x] Verify owner-contact privacy in Backend Detail and List responses for Manager, assigned Advisor and shared non-assigned Advisor (`test_sharing_flow_over_http`).
+- [x] Verify History response filtering for shared non-assigned Advisors and confirm filtering does not mutate persisted JSONB audit data (`test_shared_advisor_history_hides_owner_contacts_without_mutating_storage`).
+- [x] Verify page-level orchestration of detail/history loading and Manager-only user-data loading (`page.test.tsx`: 10 tests passed). The test does not explicitly assert vocab propagation. API/session dependencies and child components are mocked; this is not browser E2E or live Backend integration.
 
 **Relevant implementation**
 - Backend:
-  - `apps/api/app/api/routes/properties.py`
+  - `apps/api/app/api/v1/properties.py`
   - `apps/api/app/services/properties.py`
-  - `apps/api/app/schemas/property.py` (verify the current schema path before editing)
+  - `apps/api/app/schemas/properties.py`
 - Frontend:
   - `apps/web/src/app/[locale]/files/[id]/page.tsx`
-  - `apps/web/src/components/.../PropertyDetail.tsx` (verify exact current path)
-  - `apps/web/src/components/.../PropertyHistory.tsx` (verify exact current path)
-  - `apps/web/src/components/.../PropertyActions.tsx` (verify exact current path)
+  - `apps/web/src/components/PropertyDetail.tsx`
+  - `apps/web/src/components/PropertyHistory.tsx`
+  - `apps/web/src/components/PropertyActions.tsx`
   - `apps/web/src/app/api/properties/[id]/[action]/route.ts`
 - Tests:
   - `apps/api/tests/test_properties_api.py`
@@ -245,8 +254,7 @@ Goal: verify the existing implementation end-to-end before adding new Files func
 - Successful actions update or navigate to the correct state.
 - Relevant component/page integration tests pass.
 
-**Current state:** `[~]` Existing implementation and Backend/BFF coverage are present; direct UI and
-page integration verification remain.
+**Current state:** `[x]` verified at Backend API, BFF route, component and mocked-page level (2026-11-21). Backend owner-contact authorization and response filtering are covered by existing API tests for Detail, List and History, including a check that response filtering does not mutate persisted audit data. Frontend component tests (23), BFF route tests and mocked server-page orchestration tests (10) have passed in the latest recorded Frontend run. Not covered and tracked as an open risk: browser E2E and live Frontend-to-Backend integration. The current Frontend tests are not browser E2E tests. The Backend full suite was re-run on 2026-11-21 (305 passed, 1 xfailed); older counts elsewhere in this file are historical.
 
 #### F2 — Create property form
 
@@ -308,7 +316,7 @@ Acceptance criteria:
 - [ ] Verify active-user selection and agency seat constraints.
 - [ ] Add Frontend and integration tests.
 
-Backend reference: `apps/api/app/api/routes/users.py` (verify exact current path).
+Backend reference: `apps/api/app/api/v1/users.py`.
 
 Acceptance criteria:
 - Only authorized Managers can manage agency users.
@@ -361,22 +369,23 @@ A phase is not complete until:
 
 Update this section at the end of each work session.
 
-**Current focus:** F1 — Detail, History and Actions verification.
+**Current focus:** F2 — Create property form (F1 verified at component level on 2026-11-21).
 
-**Last verified repository state (2026-11-19):**
-- Branch: `master`
-- Local `master` matched `origin/master`.
+**Last verified repository state (2026-11-21):**
+- Branch `master`; local commits `ac89ca1` and `d4b8a24` are ahead of `origin/master` (`de1bfc6`) and not pushed.
 - Untracked file: `apps/web/web.rar` — preserve; do not add or commit.
-- Backend historical regression: 304 passed, 1 xfailed, 0 failed.
-- Frontend historical regression: 12 files, 68 tests passed; typecheck passed.
-- BFF property-action route historical tests: 10 passed.
-- These are historical results, not a claim that tests were rerun after this documentation update.
+- Backend full regression (2026-11-21, isolated DB): 305 passed, 1 xfailed, 0 failed.
+- Latest Frontend regression: 14 files, 105 tests passed; `npm run typecheck` passed.
+- Focused detail-page tests: 10 passed.
+- Component tests: 23 passed.
+- Vite emitted the known non-blocking `configLoader: 'native'` warning. No configuration change was made.
+- The current page tests mock API/session dependencies and child components; they are not browser E2E tests or live Backend integration tests.
 
 **Next actions:**
-1. Finish F1 direct component and page integration tests.
-2. Run focused Frontend tests and typecheck.
-3. Run relevant Backend tests if implementation changes affect API behavior.
-4. Update F1 status only after acceptance criteria have evidence.
-5. Continue to F2 only after F1 is verified.
+1. (Done 2026-11-21) Action-level role, success, failure, busy-state and refresh/redirect criteria are covered in `f1.components.test.tsx`.
+2. Confirm Backend owner-contact authorization with the existing focused API tests; rerun them only against the isolated test database if new verification is needed.
+3. Review any remaining API/BFF/UI contract gaps and add tests only where evidence identifies a gap.
+4. Update F1 status only when each acceptance criterion has sufficient evidence.
+5. F1 is verified at component level; start F2 by inspecting the create API contract, vocab lists and the existing geography routes.
 
-**Last updated:** 2026-11-19
+**Last updated:** 2026-11-21
