@@ -139,3 +139,42 @@ export function buildCreateRequest(raw: unknown): CreateRequest {
 
   return { ok: true, path: "/api/v1/properties", body };
 }
+
+
+// PUT replaces the whole file: a field that is left out is reset to its default by the backend.
+// So the update request must carry these fields explicitly and is rejected otherwise.
+const UPDATE_REQUIRED = [
+  "property_types",
+  "amenities",
+  "custom_amenities",
+  "is_corner",
+  "is_urgent",
+  "ownership_dang",
+  "convertible_options",
+] as const;
+
+/**
+ * Turns the browser's edit request into the exact backend PUT call. It reuses the create checks,
+ * requires `version` (the version the client read), ignores owner_user_id (reassigning is a
+ * separate action) and refuses a request that would silently reset a defaulted field.
+ */
+export function buildUpdateRequest(id: string, raw: unknown): CreateRequest {
+  if (!isUuid(id)) return invalid("invalid id");
+  if (!isRecord(raw)) return invalid("request body must be a JSON object");
+
+  const version = raw.version;
+  if (typeof version !== "number" || !Number.isSafeInteger(version) || version < 1) {
+    return invalid("invalid version");
+  }
+  for (const key of UPDATE_REQUIRED) {
+    if (raw[key] === undefined) return invalid(`missing ${key}`);
+  }
+
+  const rest: Record<string, unknown> = { ...raw };
+  delete rest.owner_user_id;
+  delete rest.version;
+
+  const built = buildCreateRequest(rest);
+  if (!built.ok) return built;
+  return { ok: true, path: `/api/v1/properties/${id}`, body: { ...built.body, version } };
+}
