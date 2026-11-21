@@ -85,7 +85,7 @@ Phases are ordered by dependency, not dates. A phase is done only when its exit 
 - The single xfail is `test_unsafe_shapes_are_documented[count filter without select_from]` (strict, intentional). A production grep for `func.count` / `select_from` found no unsafe shape in `app/`.
 - Frontend re-run (2026-11-21): 14 files, 105 tests passed; `npm --prefix apps/web run typecheck` passed.
 - Frontend after F2.1a (2026-11-21): 15 files, 150 tests passed (new `src/lib/propertyCreate.test.ts`: 45 tests); typecheck passed.
-- Frontend after F2.3/F2.4 (2026-11-21): 18 files, 206 tests passed (new: `propertyForm.test.ts` 29, `PropertyForm.test.tsx` 17, `api/properties/route.test.ts` 10); typecheck passed.
+- Frontend after F2.3/F2.4 (2026-11-21): 19 files, 214 tests passed (new: `propertyForm.test.ts` 29, `PropertyForm.test.tsx` 17, `api/properties/route.test.ts` 10, `files/new/page.test.tsx` 8); typecheck and `next build` passed.
 - Update this section as further findings are verified, remediated, and tested.
 
 
@@ -262,10 +262,10 @@ Goal: verify the existing implementation end-to-end before adding new Files func
 
 - [x] Inspect and document the current create API schema and validation rules. Evidence (2026-11-21): `apps/api/app/schemas/properties.py` — `PropertyCreate` extends `PropertyFields`; only `deal_type` and `city_id` are required; money fields are whole-Toman integers (0..10^13); areas are decimals with at most 2 places; `build_year` is a Jalali year (1200..1600); dates are Gregorian; controlled lists are validated against `app/domain/vocab.py`.
 - [x] Confirm Manager/Advisor ownership rules and geography/reference-data contract. Evidence (2026-11-21): `svc.create_property` — an Advisor passing another `owner_user_id` gets Forbidden; a Manager may target an existing active user, otherwise UserNotFound; the city is resolved from `city_id`; `district` is free text (max 80) suggested by `/api/geo/districts`. Existing API tests cover these rules in `test_properties_api.py`. No Jalali date library exists in `apps/web`, so the first form uses Gregorian `type="date"` inputs.
-- [~] Implement the Frontend create form and its BFF/API interaction. Done (2026-11-21, code + tests): validator `propertyCreate.ts`, BFF route `POST /api/properties`, payload builder `propertyForm.ts`, form component `PropertyForm.tsx`, page `[locale]/files/new/page.tsx`, "New file" button on the files list, fa/en messages. Price and date fields depend on the deal type to match `_apply_deal_rules`. Remaining: `next build` check, a test for `files/new/page.tsx`, manual browser check of `CityAutocomplete` and the full create flow.
+- [~] Implement the Frontend create form and its BFF/API interaction. Done (2026-11-21, code + tests + build): validator `propertyCreate.ts`, BFF route `POST /api/properties`, payload builder `propertyForm.ts`, form component `PropertyForm.tsx`, page `[locale]/files/new/page.tsx`, "New file" button on the files list, fa/en messages. Price and date fields depend on the deal type to match `_apply_deal_rules`. `npm --prefix apps/web run build` succeeded and lists `/[locale]/files/new`. Remaining: manual browser check of `CityAutocomplete` (mocked in unit tests) and the full create flow against the running Backend.
 - [x] Handle field validation, API errors, loading and successful navigation/feedback. Evidence (2026-11-21, component level): `PropertyForm.test.tsx` (17 tests) covers required-field errors, invalid values, auto-open of a section with an error, 401 to login, 403, generic 422 message, network failure with retry, double-submit guard and navigation to the new file. Not yet verified in a real browser.
 - [ ] Add Backend tests only for uncovered behavior or discovered defects.
-- [~] Add Frontend form and route tests. Done: `propertyForm.test.ts` (29), `PropertyForm.test.tsx` (17), BFF `api/properties/route.test.ts` (10). Remaining: test for `files/new/page.tsx`.
+- [x] Add Frontend form and route tests. Evidence (2026-11-21): `propertyForm.test.ts` (29), `PropertyForm.test.tsx` (17), BFF `api/properties/route.test.ts` (10), page `files/new/page.test.tsx` (8); all pass. `CityAutocomplete` is mocked in these tests, so its real behavior is verified only in the browser check above.
 - [ ] Update this checklist with exact changed paths and test evidence.
 
 API: `POST /properties`
@@ -388,6 +388,6 @@ Update this section at the end of each work session.
 2. Confirm Backend owner-contact authorization with the existing focused API tests; rerun them only against the isolated test database if new verification is needed.
 3. Review any remaining API/BFF/UI contract gaps and add tests only where evidence identifies a gap.
 4. Update F1 status only when each acceptance criterion has sufficient evidence.
-5. F2 in progress: BFF route, payload builder, form component, `[locale]/files/new` page and list entry point are implemented and tested at unit/component level (206 tests). Next: `next build`, a test for the new page, manual browser verification, then tick the remaining F2 items.
+5. F2 nearly done: form, BFF route, payload builder, `[locale]/files/new` page and list entry point are implemented; 214 Frontend tests, typecheck and build pass. Next: manual browser verification (especially `CityAutocomplete`), then close the remaining F2 items.
 
 **Last updated:** 2026-11-21

@@ -130,9 +130,12 @@ Update it when test files are added, removed or moved.
 |---|---|
 | Login BFF | `src/app/api/auth/login/route.test.ts` |
 | Logout BFF | `src/app/api/auth/logout/route.test.ts` |
+| Property create BFF | `src/app/api/properties/route.test.ts` |
 | Property action BFF | `src/app/api/properties/[id]/[action]/route.test.ts` |
 | Property detail page | `src/app/[locale]/files/[id]/page.test.tsx` |
+| Property create page | `src/app/[locale]/files/new/page.test.tsx` |
 | Property detail/history/actions components | `src/components/f1.components.test.tsx` |
+| Property create form component | `src/components/PropertyForm.test.tsx` |
 | API client | `src/lib/api.test.ts` |
 | Cookie handling | `src/lib/cookie.test.ts` |
 | Error messages | `src/lib/errorText.test.ts`, `src/lib/errorText.actions.test.ts` |
