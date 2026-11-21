@@ -216,6 +216,9 @@ export type Messages = {
     customAmenitiesHint: string;
     assignTo: string;
     assignSelf: string;
+    save: string;
+    saving: string;
+    reloadLatest: string;
     fixErrors: string;
     invalidInput: string;
     fieldErrors: { required: string; invalid: string; range: string; date: string; url: string };

@@ -219,6 +219,9 @@ export const en: Messages = {
     customAmenitiesHint: "One per line, or separated by commas.",
     assignTo: "Advisor in charge",
     assignSelf: "Myself",
+    save: "Save changes",
+    saving: "Saving…",
+    reloadLatest: "Load newest version",
     fixErrors: "Please fix the highlighted fields.",
     invalidInput: "The data was not accepted. Check the phone number and the values.",
     fieldErrors: {

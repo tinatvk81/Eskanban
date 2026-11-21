@@ -10,11 +10,21 @@ import type { Messages } from "@/i18n/messages/types";
 import { errorText } from "@/lib/errorText";
 import {
   buildCreatePayload,
+  buildUpdatePayload,
   EMPTY_FORM,
   type FormErrors,
   type FormValues,
 } from "@/lib/propertyForm";
 import type { VocabItem, VocabMap } from "@/lib/propertyTypes";
+
+/** Present only when an existing file is being edited; without it the form creates a new file. */
+export type EditData = {
+  id: string;
+  version: number;
+  values: FormValues;
+  convertibleOptions: Record<string, unknown>[];
+  city: { id: number; name: string; province_id: number; province_name: string };
+};
 
 type Props = {
   locale: Locale;
@@ -22,6 +32,7 @@ type Props = {
   vocab: VocabMap;
   isManager: boolean;
   advisors: AdvisorOption[];
+  edit?: EditData;
 };
 
 type Key = keyof FormValues;
@@ -96,15 +107,16 @@ function Section({ title, open, children }: { title: string; open: boolean; chil
   );
 }
 
-export function PropertyForm({ locale, t, vocab, isManager, advisors }: Props) {
+export function PropertyForm({ locale, t, vocab, isManager, advisors, edit }: Props) {
   const f = t.fileForm;
   const d = t.fileDetail.fields;
   const s = t.fileDetail.sections;
   const router = useRouter();
-  const [values, setValues] = useState<FormValues>(EMPTY_FORM);
+  const [values, setValues] = useState<FormValues>(edit?.values ?? EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [conflict, setConflict] = useState(false);
 
   function set<K extends Key>(key: K, value: FormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -121,15 +133,18 @@ export function PropertyForm({ locale, t, vocab, isManager, advisors }: Props) {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy) return;
+    if (busy || conflict) return;
 
     // The city picker keeps its id in a hidden field named "city" and the district in "district".
     const data = new FormData(event.currentTarget);
-    const built = buildCreatePayload({
+    const submitted = {
       ...pruneByDeal(values),
       city_id: String(data.get("city") ?? ""),
       district: String(data.get("district") ?? ""),
-    });
+    };
+    const built = edit
+      ? buildUpdatePayload(submitted, edit.version, edit.convertibleOptions)
+      : buildCreatePayload(submitted);
     if (!built.ok) {
       setErrors(built.errors);
       setMessage(null);
@@ -140,14 +155,15 @@ export function PropertyForm({ locale, t, vocab, isManager, advisors }: Props) {
     setMessage(null);
     setBusy(true);
     try {
-      const res = await fetch("/api/properties", {
-        method: "POST",
+      const res = await fetch(edit ? `/api/properties/${edit.id}` : "/api/properties", {
+        method: edit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(built.body),
       });
       if (res.ok) {
         const created = (await res.json().catch(() => null)) as { id?: string } | null;
-        router.replace(created?.id ? `/${locale}/files/${created.id}` : `/${locale}/files`);
+        const target = created?.id ?? edit?.id;
+        router.replace(target ? `/${locale}/files/${target}` : `/${locale}/files`);
         router.refresh();
         return; // stay busy while navigating so the file cannot be created twice
       }
@@ -161,6 +177,7 @@ export function PropertyForm({ locale, t, vocab, isManager, advisors }: Props) {
       } catch {
         /* non-JSON error body */
       }
+      if (edit && res.status === 409 && code === "version_conflict") setConflict(true);
       setMessage(res.status === 422 ? f.invalidInput : errorText(t, code));
     } catch {
       setMessage(t.errors.unavailable);
@@ -305,7 +322,7 @@ export function PropertyForm({ locale, t, vocab, isManager, advisors }: Props) {
     <form className="files-filter" onSubmit={onSubmit} noValidate>
       <div className="files-grid">
         {select("deal_type", d.dealType, vocabOptions("deal_types"), f.choose)}
-        {isManager && advisors.length > 0
+        {!edit && isManager && advisors.length > 0
           ? select(
               "owner_user_id",
               f.assignTo,
@@ -315,8 +332,8 @@ export function PropertyForm({ locale, t, vocab, isManager, advisors }: Props) {
           : null}
         {checkGroup("property_types", t.files.propertyType)}
         <CityAutocomplete
-          initialCity={null}
-          initialDistrict=""
+          initialCity={edit?.city ?? null}
+          initialDistrict={edit?.values.district ?? ""}
           labels={{
             city: t.files.city,
             district: t.files.district,
@@ -419,10 +436,15 @@ export function PropertyForm({ locale, t, vocab, isManager, advisors }: Props) {
       ) : null}
 
       <div className="form-actions">
-        <button type="submit" className="files-btn files-btn--primary" disabled={busy}>
-          {busy ? f.submitting : f.submit}
+        <button type="submit" className="files-btn files-btn--primary" disabled={busy || conflict}>
+          {busy ? (edit ? f.saving : f.submitting) : edit ? f.save : f.submit}
         </button>
-        <Link href={`/${locale}/files`} className="files-btn">
+        {conflict ? (
+          <button type="button" className="files-btn" onClick={() => router.refresh()}>
+            {f.reloadLatest}
+          </button>
+        ) : null}
+        <Link href={edit ? `/${locale}/files/${edit.id}` : `/${locale}/files`} className="files-btn">
           {f.cancel}
         </Link>
       </div>

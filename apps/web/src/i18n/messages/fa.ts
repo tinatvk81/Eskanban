@@ -219,6 +219,9 @@ export const fa: Messages = {
     customAmenitiesHint: "هر مورد در یک خط یا با ویرگول جدا شود.",
     assignTo: "مشاور مسئول فایل",
     assignSelf: "خودم",
+    save: "ذخیرهٔ تغییرات",
+    saving: "در حال ذخیره…",
+    reloadLatest: "بارگذاری نسخهٔ جدید",
     fixErrors: "لطفاً خطاهای مشخص‌شده را اصلاح کنید.",
     invalidInput: "اطلاعات واردشده پذیرفته نشد. شمارهٔ تلفن و مقدارها را بررسی کنید.",
     fieldErrors: {
