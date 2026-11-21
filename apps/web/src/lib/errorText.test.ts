@@ -8,6 +8,10 @@ describe("errorText", () => {
     ["invalid_credentials", "invalidCredentials"],
     ["weak_password", "weakPassword"],
     ["wrong_password", "wrongPassword"],
+    ["forbidden", "forbidden"],
+    ["version_conflict", "versionConflict"],
+    ["property_not_found", "notFound"],
+    ["user_not_found", "userNotFound"],
     ["unavailable", "unavailable"],
   ] as const)("maps %s", (code, key) => {
     expect(errorText(fa, code)).toBe(fa.errors[key]);
