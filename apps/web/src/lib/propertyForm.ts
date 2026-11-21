@@ -5,6 +5,8 @@
  * here: the backend is the authority on them.
  */
 
+import type { PropertyDetail } from "./propertyTypes";
+
 export type FieldError = "required" | "invalid" | "range" | "date" | "url";
 
 export type FormValues = {
@@ -232,4 +234,83 @@ export function buildCreatePayload(values: FormValues): CreatePayloadResult {
   putText("owner_user_id", values.owner_user_id);
 
   return Object.keys(errors).length > 0 ? { ok: false, errors } : { ok: true, body };
+}
+
+
+// ---------------------------------------------------------------------------------------------
+// Edit form: the API detail becomes form strings, and form strings become the PUT body.
+
+const text = (value: string | null | undefined): string => value ?? "";
+const plain = (value: number | string | null | undefined): string =>
+  value === null || value === undefined ? "" : String(value);
+
+/** The API may return +98... numbers; the form shows the local 09... shape people type. */
+function localPhone(value: string | null): string {
+  if (!value) return "";
+  return value.startsWith("+98") ? `0${value.slice(3)}` : value;
+}
+
+export function propertyToFormValues(p: PropertyDetail): FormValues {
+  return {
+    deal_type: p.deal_type,
+    property_types: [...p.property_types],
+    city_id: String(p.city.id),
+    district: text(p.district),
+    address: text(p.address),
+    location_url: text(p.location_url),
+    land_area_m2: plain(p.land_area_m2),
+    built_area_m2: plain(p.built_area_m2),
+    rooms: plain(p.rooms),
+    floor: plain(p.floor),
+    total_floors: plain(p.total_floors),
+    total_units: plain(p.total_units),
+    build_year: plain(p.build_year),
+    direction: text(p.direction),
+    is_corner: p.is_corner,
+    amenities: [...p.amenities],
+    custom_amenities: p.custom_amenities.join("\n"),
+    document_type: text(p.document_type),
+    document_note: text(p.document_note),
+    ownership_dang: String(p.ownership_dang),
+    is_divided: p.is_divided === true ? "yes" : p.is_divided === false ? "no" : "",
+    deed_scope: text(p.deed_scope),
+    ownership_kind: text(p.ownership_kind),
+    occupancy: text(p.occupancy),
+    vacate_date: text(p.vacate_date),
+    owner_name: text(p.owner_name),
+    owner_phone: localPhone(p.owner_phone),
+    price_total: plain(p.price_total),
+    price_per_m2: plain(p.price_per_m2),
+    deposit: plain(p.deposit),
+    monthly_rent: plain(p.monthly_rent),
+    price_note: text(p.price_note),
+    payment_terms: text(p.payment_terms),
+    contract_end_date: text(p.contract_end_date),
+    delivery_date: text(p.delivery_date),
+    is_urgent: p.is_urgent,
+    urgent_until: text(p.urgent_until),
+    notes: text(p.notes),
+    owner_user_id: "", // reassigning is a separate action, never part of an edit
+  };
+}
+
+/**
+ * The body of PUT /api/properties/{id}. PUT replaces the whole file, so convertible_options (which
+ * the form has no inputs for) is carried over from the loaded file unchanged. A field the user
+ * cleared is left out and the backend resets it to empty.
+ */
+export function buildUpdatePayload(
+  values: FormValues,
+  version: number,
+  convertibleOptions: Record<string, unknown>[],
+): CreatePayloadResult {
+  const built = buildCreatePayload({ ...values, owner_user_id: "" });
+  if (!built.ok) return built;
+  const body: Record<string, unknown> = {
+    ...built.body,
+    convertible_options: convertibleOptions.map((option) => ({ ...option })),
+    version,
+  };
+  if (body.ownership_dang === undefined) body.ownership_dang = 6; // the backend default
+  return { ok: true, body };
 }
