@@ -190,6 +190,33 @@ def test_reassign_and_manager_creating_for_an_advisor(client, team, city_ids):
     assert denied.status_code == 403
 
 
+def test_reassign_rejects_cross_agency_advisor(
+    client, team, city_ids, make_agency, make_advisor
+):
+    foreign_agency = make_agency("api-reassign-foreign", seats=3)
+    foreign_advisor = make_advisor(
+        foreign_agency, name="Foreign Advisor"
+    )
+
+    f = create(client, team["adv1"], city_ids["mashhad"])
+
+    response = client.post(
+        f"{BASE}/{f['id']}/reassign",
+        headers=auth(team["manager"]),
+        json={"owner_user_id": str(foreign_advisor["user_id"])},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "user_not_found"
+
+    current = client.get(
+        f"{BASE}/{f['id']}",
+        headers=auth(team["manager"]),
+    )
+    assert current.status_code == 200
+    assert current.json()["owner"]["full_name"] == "Advisor One"
+
+
 def test_soft_delete_hides_the_file_for_everyone(client, team, city_ids):
     f = create(client, team["adv1"], city_ids["mashhad"])
     assert (
