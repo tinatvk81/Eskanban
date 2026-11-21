@@ -139,7 +139,9 @@ Update it when test files are added, removed or moved.
 | Formatting | `src/lib/format.test.ts` |
 | Origin / CSRF helpers | `src/lib/origin.test.ts` |
 | Property action validation | `src/lib/propertyActions.test.ts` |
+| Property create validation | `src/lib/propertyCreate.test.ts` |
 | Property detail helpers | `src/lib/propertyDetail.test.ts` |
+| Property form payload builder | `src/lib/propertyForm.test.ts` |
 | Property query helpers | `src/lib/propertyQuery.test.ts` |
 
 The Frontend test inventory includes direct component tests and a page-level test for
