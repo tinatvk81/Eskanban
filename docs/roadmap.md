@@ -369,7 +369,7 @@ Status: design approved by the owner 2026-11-22; implementation proceeds slice b
 
 | Slice | Scope | Backend | Frontend | Tests | Docs |
 |---|---|---|---|---|---|
-| S1 | Registry, `source_listings` + `listing_inbox`, add-from-link, listing list with source badge, convert to file, dismiss, `properties.source` | [ ] | [ ] | [ ] | [ ] |
+| S1 | Registry, `source_listings` + `listing_inbox`, add-from-link, listing list with source badge, convert to file, dismiss, `properties.source` | [x] | [x] | [x] | [x] |
 | S2 | Connector interface, mapper with offline fixtures, `ingest` CLI with kill switch, 90-day cleanup, last-run status on the listings page | [ ] | [ ] | [ ] | [ ] |
 | S3.divar | Divar connector (official API if granted; otherwise per the access gate) | [ ] | [ ] | [ ] | [ ] |
 | S3.sheypoor | Sheypoor connector | [ ] | [ ] | [ ] | [ ] |
