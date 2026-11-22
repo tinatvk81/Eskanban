@@ -2,13 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import type { Locale } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages/types";
 import { errorText } from "@/lib/errorText";
 
-type Props = { t: Messages };
+type Props = { locale: Locale; t: Messages };
 type Message = { kind: "ok" | "error"; text: string };
 
-export function AddListingLinkForm({ t }: Props) {
+export function AddListingLinkForm({ locale, t }: Props) {
   const l = t.listings;
   const router = useRouter();
   const [url, setUrl] = useState("");
@@ -38,7 +39,7 @@ export function AddListingLinkForm({ t }: Props) {
         /* non-JSON error body */
       }
       if (res.status === 401) {
-        router.replace("/login");
+        router.replace(`/${locale}/login`);
         return;
       }
       setMessage({ kind: "error", text: errorText(t, code) });

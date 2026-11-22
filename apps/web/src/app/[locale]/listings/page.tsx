@@ -47,7 +47,7 @@ export default async function ListingsPage({
       <Topbar locale={locale} t={t} path="/listings" />
       <h1>{l.title}</h1>
 
-      <AddListingLinkForm t={t} />
+      <AddListingLinkForm locale={locale} t={t} />
 
       {list.ok ? (
         list.data.items.length > 0 ? (

@@ -32,7 +32,7 @@ afterEach(() => {
 
 describe("AddListingLinkForm", () => {
   it("disables the button until a link is typed", async () => {
-    render(<AddListingLinkForm t={t} />);
+    render(<AddListingLinkForm locale="fa" t={t} />);
     const button = screen.getByRole("button", { name: l.addButton }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     await userEvent.setup().type(screen.getByLabelText(l.linkLabel), URL_OK);
@@ -42,7 +42,7 @@ describe("AddListingLinkForm", () => {
   it("POSTs the url, clears the input, shows success and refreshes", async () => {
     fetchMock.mockResolvedValue({ ok: true, status: 201 });
     const user = userEvent.setup();
-    render(<AddListingLinkForm t={t} />);
+    render(<AddListingLinkForm locale="fa" t={t} />);
     const input = screen.getByLabelText(l.linkLabel) as HTMLInputElement;
     await user.type(input, URL_OK);
     await user.click(screen.getByRole("button", { name: l.addButton }));
@@ -62,7 +62,7 @@ describe("AddListingLinkForm", () => {
       json: async () => ({ error: { code: "some_server_code" } }),
     });
     const user = userEvent.setup();
-    render(<AddListingLinkForm t={t} />);
+    render(<AddListingLinkForm locale="fa" t={t} />);
     await user.type(screen.getByLabelText(l.linkLabel), URL_OK);
     await user.click(screen.getByRole("button", { name: l.addButton }));
     expect((await screen.findByRole("alert")).textContent).toBe(errorText(t, "some_server_code"));
@@ -72,19 +72,18 @@ describe("AddListingLinkForm", () => {
   it("shows the unavailable text when the network fails", async () => {
     fetchMock.mockRejectedValue(new Error("network down"));
     const user = userEvent.setup();
-    render(<AddListingLinkForm t={t} />);
+    render(<AddListingLinkForm locale="fa" t={t} />);
     await user.type(screen.getByLabelText(l.linkLabel), URL_OK);
     await user.click(screen.getByRole("button", { name: l.addButton }));
     expect((await screen.findByRole("alert")).textContent).toBe(errorText(t, "unavailable"));
   });
 
-  it("redirects to a login route on 401", async () => {
+  it("redirects to the locale login route on 401", async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({}) });
     const user = userEvent.setup();
-    render(<AddListingLinkForm t={t} />);
+    render(<AddListingLinkForm locale="fa" t={t} />);
     await user.type(screen.getByLabelText(l.linkLabel), URL_OK);
     await user.click(screen.getByRole("button", { name: l.addButton }));
-    await waitFor(() => expect(replace).toHaveBeenCalledTimes(1));
-    expect(String(replace.mock.calls[0][0])).toMatch(/login/);
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/fa/login"));
   });
 });
