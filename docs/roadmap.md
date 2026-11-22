@@ -38,7 +38,7 @@ Phases are ordered by dependency, not dates. A phase is done only when its exit 
 
 ## Phase 5 — New listings and lead routing
 - Scraper workers and queue; deduplication; advisors opt into province/city/regions and see only those.
-- Divar (decided 2026-11-21): start with "add from link" (advisor pastes a Divar ad link, we store the source link and fields); request official Divar partner access in parallel; no automated scraping before a per-source ToS/legal review.
+- Divar (decided 2026-11-21; ingestion rules superseded by F7 on 2026-11-22): start with "add from link" (advisor pastes a Divar ad link, we store the source link and fields); request official Divar partner access in parallel; no automated scraping before a per-source ToS/legal review.
 - **Exit:** new listings from approved sources reach matching advisors automatically.
 
 ## Phase 6 — Websites, plans, white-label
@@ -117,7 +117,7 @@ Each feature must be completed as a Backend + Frontend + tests + documentation s
 2. **F2 — Create property form.** Build the Frontend form against the existing create API, including validation, geography/reference data, Manager assignment rules and successful navigation/feedback. Add Backend/Frontend tests as needed.
 3. **F3 — Edit property form.** Connect the existing update API, include the required `version`, and handle stale-version conflicts without silently overwriting another user's changes.
 4. **F4 — Dashboard statistics.** Connect the existing statistics endpoint to the Dashboard and verify tenant scoping, role behavior, loading and error states.
-5. **F7 — Listing ingestion (Divar, Mashhad).** Inserted ahead of F5 by owner decision on 2026-11-22; see the F7 section. Ingestion uses official source APIs only (owner decision 2026-11-22).
+5. **F7 — Listing ingestion (Divar, Mashhad).** Inserted ahead of F5 by owner decision on 2026-11-22; see the F7 section. Rules, slices and status matrix are in the F7 section; sources are listed in `docs/listing-sources.md`.
 6. **F5 — User management.** Build the Manager-facing UI for the existing user-management APIs and verify seat limits, active-user selection, deactivation and password-reset behavior.
 7. **F6 — Photos and attachments.** First define authorization, storage, upload/download constraints and lifecycle; then implement Backend and Frontend together. Do not assume a storage design before review.
 
@@ -347,24 +347,49 @@ Acceptance criteria:
 - Loading and failure states are handled.
 - No cross-tenant information is exposed.
 
-#### F7 — Listing ingestion (Divar, Mashhad)
+#### F7 — Listing ingestion (Mashhad, all categories, owner-posted ads)
 
-Status: proposed 2026-11-22; no implementation approved yet. Scope: Mashhad, all real-estate categories, owner-posted (personal) ads only. Source of truth for the Divar decision: the 2026-11-21 line near the top of this file (add-from-link first; request official partner access in parallel; no automated scraping before a per-source ToS/legal review).
+Status: design approved by the owner 2026-11-22; implementation proceeds slice by slice. Source registry and access gate: `docs/listing-sources.md` (the single list of sites; keep it in sync with `apps/api/app/domain/sources.py`).
 
-- [ ] F7.0 Source access gate (owner decision 2026-11-22): listings come from each source's official API or partner access only; no scraping. Before relying on Divar, confirm with Divar what its partner API covers (search versus fetch-by-token). A source is enabled only after the owner records that its API access is granted; a source without an API is decided separately by the owner.
-- [ ] F7.1 Design for approval: data model (global listings table vs per-agency copies; tenancy rules require a decision because public listings are not tenant-owned), dedup key (source + external token), conversion of a discovered listing into a Property file, and the worker boundary. No migration before approval.
-- [ ] F7.2 Privacy rule (proposed): store only title, price, district, posted time and the link to the original ad; do not collect owner phone numbers.
-- [ ] F7.3 Add from link: advisor pastes a Divar ad link; store the source link and extracted fields; Backend tests incl. cross-agency 404.
-- [ ] F7.4 Source connector interface and mapper with offline fixtures: map each source's official API response to the internal listing shape; no network in tests. The DevTools-captured `POST_ROW` payload is not an approved source and is not used.
-- [ ] F7.5 Isolated ingestion worker (location decided in F7.1; `apps/scraper` currently holds only a README): separate process, per-source API keys from environment, rate limits per each source's terms, per-source failure isolation, kill switch; a source stays disabled until its access is recorded in F7.0.
-- [ ] F7.6 Frontend: list of discovered listings and a convert-to-file action through the existing BFF pattern.
-- [ ] Remaining risks and deferred work are recorded (Sheypoor and other sources deferred; whether each source's API offers an owner-only filter must be confirmed from its documentation).
+**Owner decisions (2026-11-22):**
+- Scope: Mashhad, all categories, owner-posted (personal) ads only.
+- Use a source's official API when one exists (the owner will say when a source has one); otherwise crawl it, only after that source's access gate is recorded in `docs/listing-sources.md`. This supersedes the earlier Phase 5 note about no automated scraping.
+- Every discovered listing shows which source it came from (badge and link to the original ad). After conversion to a Property file, the source label is not required in the UI; `properties.source` and `properties.source_url` are stored for traceability.
+- Gone listings are deleted after 90 days.
+- The ingestion worker is a CLI inside `apps/api` (`app/ingest`, `python -m app.cli ingest --source <key>`), one process per source, so one failing source cannot affect the API or other sources.
+- Never store owner phone numbers or names from a source. No evasion of blocking (no fingerprint spoofing, proxy rotation or captcha bypass); a source that blocks us is disabled.
+
+**Design (approved for slice S1):**
+- Global table `source_listings` (not tenant-owned): `source`, `external_id` (unique together), `url`, `title`, `city_id`, `district`, `deal_type`, `property_types`, `price_total`, `deposit`, `monthly_rent`, `posted_at`, `first_seen_at`, `last_seen_at`, `is_gone`.
+- Tenant table `listing_inbox` (`TenantMixin`): per-agency state `new`, `dismissed`, `converted`, plus `converted_property_id`; unique on `(agency_id, source_listing_id)`.
+- `properties` gets `source` and `source_url`; creating a file from a listing writes a `property_history` entry.
+- `source` is a short key validated against the code registry (not an enumerated CHECK), so adding a source needs no migration. This is the one deliberate exception to the controlled-list rule in `.claude/rules/files.md`.
+
+**Status matrix** (one row per slice; a slice is closed only when all four columns are ticked):
+
+| Slice | Scope | Backend | Frontend | Tests | Docs |
+|---|---|---|---|---|---|
+| S1 | Registry, `source_listings` + `listing_inbox`, add-from-link, listing list with source badge, convert to file, dismiss, `properties.source` | [ ] | [ ] | [ ] | [ ] |
+| S2 | Connector interface, mapper with offline fixtures, `ingest` CLI with kill switch, 90-day cleanup, last-run status on the listings page | [ ] | [ ] | [ ] | [ ] |
+| S3.divar | Divar connector (official API if granted; otherwise per the access gate) | [ ] | [ ] | [ ] | [ ] |
+| S3.sheypoor | Sheypoor connector | [ ] | [ ] | [ ] | [ ] |
+| S3.ihome | iHome connector | [ ] | [ ] | [ ] | [ ] |
+| S3.kilid | Kilid connector | [ ] | [ ] | [ ] | [ ] |
+| S4 | Source and owner-only filters, cross-source duplicate hints | [ ] | [ ] | [ ] | [ ] |
+
+Further sources from `docs/listing-sources.md` get their own S3 row when the owner decides.
+
+**Slice S1 checklist:**
+- [ ] Backend: `app/domain/sources.py`, migration 0005, models, service, endpoints (`GET /listings`, `POST /listings/from-link`, `POST /listings/{id}/convert`, `POST /listings/{id}/dismiss`), cross-agency 404 and tenant isolation tests, new query shapes in `test_tenancy_statement_shapes.py`.
+- [ ] Frontend: listings page with source badge and link, add-from-link form, convert and dismiss actions through BFF route handlers, fa and en messages, tests.
+- [ ] Docs: this matrix, Session Handoff, test results, `docs/listing-sources.md` gate log.
 
 Acceptance criteria:
-- No source is ingested automatically until its official API access is recorded in F7.0.
+- No source is ingested automatically until its access gate is recorded in `docs/listing-sources.md`.
 - Discovered listings never expose owner phone numbers.
 - A failing source does not affect the main API or other sources.
 - Converting a listing creates a normal Property file under the existing visibility and history rules.
+- Every listing shown in the UI names its source.
 
 #### F5 — User management
 
@@ -445,6 +470,6 @@ Update this section at the end of each work session.
 3. [Done 2026-11-22: 28 files, 293 tests; typecheck and build pass] Run the complete Frontend test suite and inspect the final diff.
 4. Perform manual browser verification in Persian and English, including API failure and zero-value states.
 5. Record actual results and close F4 criteria only after verification. Keep Backend tenant and role visibility as the authorization boundary; do not add Frontend filtering.
-6. Next phase after F4 closes: F7 — Listing ingestion (moved ahead of F5 on 2026-11-22). Start with F7.1 design for approval; no automatic ingestion until each source's official API access is recorded (F7.0). F5 (user management) follows.
+6. Next phase after F4 closes: F7 — Listing ingestion (moved ahead of F5 on 2026-11-22). Start with F7.1 design for approval; work in vertical slices (Backend + Frontend + tests + docs per slice, see the F7 status matrix); no live ingestion from a source until its access gate is recorded in `docs/listing-sources.md`. F5 (user management) follows.
 
 **Last updated:** 2026-11-22
