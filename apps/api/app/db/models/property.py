@@ -104,6 +104,10 @@ class Property(IdMixin, TimestampMixin, TenantMixin, Base):
     owner_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     owner_phone: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
+    # --- provenance (F7): set when this file came from a discovered listing ---
+    source: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
     # --- prices (whole Toman) ---
     price_total: Mapped[int | None] = mapped_column(BigInteger, nullable=True)  # sale / presale
     price_per_m2: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
@@ -192,6 +196,10 @@ class Property(IdMixin, TimestampMixin, TenantMixin, Base):
             "coalesce(price_total, 0) >= 0 AND coalesce(price_per_m2, 0) >= 0 "
             "AND coalesce(deposit, 0) >= 0 AND coalesce(monthly_rent, 0) >= 0",
             name="prices_non_negative",
+        ),
+        CheckConstraint(
+            "source IS NULL OR source ~ '^[a-z0-9_]{2,30}$'",
+            name="source_shape",
         ),
         Index("ix_properties_agency_status", "agency_id", "status"),
         Index("ix_properties_contract_end_date", "contract_end_date"),

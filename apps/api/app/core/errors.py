@@ -92,3 +92,7 @@ class PasswordChangeRequired(Forbidden):
     """The user still has a temporary password and must change it before using the app."""
 
     code = "password_change_required"
+
+
+class ListingNotFound(DomainError):
+    code = "listing_not_found"
