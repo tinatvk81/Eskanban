@@ -226,3 +226,9 @@ When adding or moving tests:
 - Keep commands aligned with actual package scripts and test configuration.
 - Do not hardcode test counts here; test counts belong in execution evidence in `roadmap.md`.
 - Keep feature-specific acceptance criteria in `roadmap.md`, not duplicated in this guide.
+
+### Frontend test runner notes (WSL)
+
+- Run a focused file from the repo root: `npm --prefix apps/web run test -- '<path to test file>'`.
+- Do not force `--pool=threads`. With the repo under `/mnt/c/...` in WSL it failed with `Timeout waiting for worker to respond` after 60 s (2026-11-22). The default pool works.
+- The Vite `configLoader: 'native'` warning about `vitest.config.ts` is known and non-blocking.
