@@ -22,6 +22,7 @@ export function errorText(
     case "version_conflict":
       return t.errors.versionConflict;
     case "property_not_found":
+    case "listing_not_found":
       return t.errors.notFound;
     case "user_not_found":
       return t.errors.userNotFound;

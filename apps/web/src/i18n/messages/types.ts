@@ -236,4 +236,35 @@ export type Messages = {
     invalidInput: string;
     fieldErrors: { required: string; invalid: string; range: string; date: string; url: string };
   };
+  listings: {
+    title: string;
+    navLink: string;
+    linkLabel: string;
+    linkPlaceholder: string;
+    addButton: string;
+    adding: string;
+    added: string;
+    empty: string;
+    count: string;
+    viewOriginal: string;
+    columns: {
+      source: string;
+      title: string;
+      owner: string;
+      price: string;
+      status: string;
+      actions: string;
+    };
+    statusLabel: { new: string; dismissed: string; converted: string };
+    dismiss: string;
+    convert: string;
+    convertConfirm: string;
+    converting: string;
+    convertMissing: string;
+    openFile: string;
+    dealTypeLabel: string;
+    cityIdLabel: string;
+    cityIdPlaceholder: string;
+    choose: string;
+  };
 };

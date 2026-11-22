@@ -82,6 +82,9 @@ const initialCity =
   return (
     <main className="container files-page">
       <Topbar locale={locale} t={t} path="/files">
+        <Link href={`/${locale}/listings`} className="files-btn">
+          {t.listings.navLink}
+        </Link>
         <LogoutButton locale={locale} label={t.auth.logout} />
       </Topbar>
 
