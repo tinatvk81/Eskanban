@@ -117,8 +117,9 @@ Each feature must be completed as a Backend + Frontend + tests + documentation s
 2. **F2 — Create property form.** Build the Frontend form against the existing create API, including validation, geography/reference data, Manager assignment rules and successful navigation/feedback. Add Backend/Frontend tests as needed.
 3. **F3 — Edit property form.** Connect the existing update API, include the required `version`, and handle stale-version conflicts without silently overwriting another user's changes.
 4. **F4 — Dashboard statistics.** Connect the existing statistics endpoint to the Dashboard and verify tenant scoping, role behavior, loading and error states.
-5. **F5 — User management.** Build the Manager-facing UI for the existing user-management APIs and verify seat limits, active-user selection, deactivation and password-reset behavior.
-6. **F6 — Photos and attachments.** First define authorization, storage, upload/download constraints and lifecycle; then implement Backend and Frontend together. Do not assume a storage design before review.
+5. **F7 — Listing ingestion (Divar, Mashhad).** Inserted ahead of F5 by owner decision on 2026-11-22; see the F7 section. Ingestion uses official source APIs only (owner decision 2026-11-22).
+6. **F5 — User management.** Build the Manager-facing UI for the existing user-management APIs and verify seat limits, active-user selection, deactivation and password-reset behavior.
+7. **F6 — Photos and attachments.** First define authorization, storage, upload/download constraints and lifecycle; then implement Backend and Frontend together. Do not assume a storage design before review.
 
 ### Security and scope constraints
 
@@ -346,6 +347,25 @@ Acceptance criteria:
 - Loading and failure states are handled.
 - No cross-tenant information is exposed.
 
+#### F7 — Listing ingestion (Divar, Mashhad)
+
+Status: proposed 2026-11-22; no implementation approved yet. Scope: Mashhad, all real-estate categories, owner-posted (personal) ads only. Source of truth for the Divar decision: the 2026-11-21 line near the top of this file (add-from-link first; request official partner access in parallel; no automated scraping before a per-source ToS/legal review).
+
+- [ ] F7.0 Source access gate (owner decision 2026-11-22): listings come from each source's official API or partner access only; no scraping. Before relying on Divar, confirm with Divar what its partner API covers (search versus fetch-by-token). A source is enabled only after the owner records that its API access is granted; a source without an API is decided separately by the owner.
+- [ ] F7.1 Design for approval: data model (global listings table vs per-agency copies; tenancy rules require a decision because public listings are not tenant-owned), dedup key (source + external token), conversion of a discovered listing into a Property file, and the worker boundary. No migration before approval.
+- [ ] F7.2 Privacy rule (proposed): store only title, price, district, posted time and the link to the original ad; do not collect owner phone numbers.
+- [ ] F7.3 Add from link: advisor pastes a Divar ad link; store the source link and extracted fields; Backend tests incl. cross-agency 404.
+- [ ] F7.4 Source connector interface and mapper with offline fixtures: map each source's official API response to the internal listing shape; no network in tests. The DevTools-captured `POST_ROW` payload is not an approved source and is not used.
+- [ ] F7.5 Isolated ingestion worker (location decided in F7.1; `apps/scraper` currently holds only a README): separate process, per-source API keys from environment, rate limits per each source's terms, per-source failure isolation, kill switch; a source stays disabled until its access is recorded in F7.0.
+- [ ] F7.6 Frontend: list of discovered listings and a convert-to-file action through the existing BFF pattern.
+- [ ] Remaining risks and deferred work are recorded (Sheypoor and other sources deferred; whether each source's API offers an owner-only filter must be confirmed from its documentation).
+
+Acceptance criteria:
+- No source is ingested automatically until its official API access is recorded in F7.0.
+- Discovered listings never expose owner phone numbers.
+- A failing source does not affect the main API or other sources.
+- Converting a listing creates a normal Property file under the existing visibility and history rules.
+
 #### F5 — User management
 
 - [ ] Inspect existing user APIs, schemas, seat limits and authorization.
@@ -425,6 +445,6 @@ Update this section at the end of each work session.
 3. [Done 2026-11-22: 28 files, 293 tests; typecheck and build pass] Run the complete Frontend test suite and inspect the final diff.
 4. Perform manual browser verification in Persian and English, including API failure and zero-value states.
 5. Record actual results and close F4 criteria only after verification. Keep Backend tenant and role visibility as the authorization boundary; do not add Frontend filtering.
-6. Next phase after F4 closes: F5 — User management. Inspect the existing user-management APIs and tests first; confirm scope with the owner.
+6. Next phase after F4 closes: F7 — Listing ingestion (moved ahead of F5 on 2026-11-22). Start with F7.1 design for approval; no automatic ingestion until each source's official API access is recorded (F7.0). F5 (user management) follows.
 
 **Last updated:** 2026-11-22
