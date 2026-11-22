@@ -13,6 +13,7 @@ _STATUS: dict[type[e.DomainError], int] = {
     e.LastManager: 409,
     e.UserNotFound: 404,
     e.PropertyNotFound: 404,
+    e.ListingNotFound: 404,
     e.VersionConflict: 409,
     e.CityNotFound: 422,
     e.InvalidCredentials: 401,

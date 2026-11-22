@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, Uuid, func
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, String, Uuid, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -31,9 +31,9 @@ class SourceListing(IdMixin, Base):
     deal_type: Mapped[str | None] = mapped_column(String(20))
     property_types: Mapped[list[str]] = mapped_column(JSONB, nullable=False, server_default="[]")
 
-    price_total: Mapped[int | None]
-    deposit: Mapped[int | None]
-    monthly_rent: Mapped[int | None]
+    price_total: Mapped[int | None] = mapped_column(BigInteger)
+    deposit: Mapped[int | None] = mapped_column(BigInteger)
+    monthly_rent: Mapped[int | None] = mapped_column(BigInteger)
 
     posted_at: Mapped[date | None]
     first_seen_at: Mapped[datetime] = mapped_column(

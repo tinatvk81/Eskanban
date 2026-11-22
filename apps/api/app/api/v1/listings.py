@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -49,7 +51,7 @@ def add_from_link(
 
 @router.post("/{listing_id}/dismiss", response_model=ListingOut)
 def dismiss(
-    listing_id: str,
+    listing_id: uuid.UUID,
     db: Session = Depends(get_data_db),
     ctx: AuthContext = Depends(get_context),
 ):
@@ -60,7 +62,7 @@ def dismiss(
 
 @router.post("/{listing_id}/convert", status_code=201)
 def convert(
-    listing_id: str,
+    listing_id: uuid.UUID,
     body: PropertyFields,
     db: Session = Depends(get_data_db),
     ctx: AuthContext = Depends(get_context),
