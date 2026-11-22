@@ -44,7 +44,7 @@ For every source, record in the "Gate log" below:
 1. Official API or partner access, if one exists: key stored in the environment, never in git.
 2. If there is no API and the owner decides to crawl: the owner has read the site's terms and robots rules and recorded the decision.
 3. Request rate that is slow and polite; no evasion of blocking (no browser-fingerprint spoofing, no proxy rotation, no captcha bypass). If a source blocks us, it is disabled.
-4. Only these fields are stored: title, price, district, posted time, deal type, property type, link to the original ad. No owner phone numbers or names.
+4. Capture whatever the source ad page shows, including (when present): title, price, district, posted time, deal type, property type, owner name, owner phone, address, link to the original ad. A field the page doesn't show is left blank for the advisor to fill in by hand — never invented or looked up elsewhere.
 5. Offline fixtures exist for the parser and the connector tests run without network.
 6. The way to find owner-posted ads for this source is documented in the table above.
 

@@ -357,13 +357,13 @@ Status: design approved by the owner 2026-11-22; implementation proceeds slice b
 - Every discovered listing shows which source it came from (badge and link to the original ad). After conversion to a Property file, the source label is not required in the UI; `properties.source` and `properties.source_url` are stored for traceability.
 - Gone listings are deleted after 90 days.
 - The ingestion worker is a CLI inside `apps/api` (`app/ingest`, `python -m app.cli ingest --source <key>`), one process per source, so one failing source cannot affect the API or other sources.
-- Never store owner phone numbers or names from a source. No evasion of blocking (no fingerprint spoofing, proxy rotation or captcha bypass); a source that blocks us is disabled.
+- Owner decision (2026-11-22, revised): if a source's ad page shows the owner's name, phone number or address, capture and store them so conversion to a Property file pre-fills those fields; whatever the source page doesn't show, the advisor fills in by hand. (Supersedes the earlier "never store owner phone numbers or names" line.) No evasion of blocking (no fingerprint spoofing, proxy rotation or captcha bypass); a source that blocks us is disabled.
 
 **Design (approved for slice S1):**
-- Global table `source_listings` (not tenant-owned): `source`, `external_id` (unique together), `url`, `title`, `city_id`, `district`, `deal_type`, `property_types`, `price_total`, `deposit`, `monthly_rent`, `posted_at`, `first_seen_at`, `last_seen_at`, `is_gone`.
+- Global table `source_listings` (not tenant-owned): `source`, `external_id` (unique together), `url`, `title`, `owner_name`, `owner_phone`, `address`, `city_id`, `district`, `deal_type`, `property_types`, `price_total`, `deposit`, `monthly_rent`, `posted_at`, `first_seen_at`, `last_seen_at`, `is_gone`. `owner_name`, `owner_phone` and `address` are nullable — filled only when the source page actually shows them, never invented.
 - Tenant table `listing_inbox` (`TenantMixin`): per-agency state `new`, `dismissed`, `converted`, plus `converted_property_id`; unique on `(agency_id, source_listing_id)`.
 - `properties` gets `source` and `source_url`; creating a file from a listing writes a `property_history` entry.
-- `source` is a short key validated against the code registry (not an enumerated CHECK), so adding a source needs no migration. This is the one deliberate exception to the controlled-list rule in `.claude/rules/files.md`.
+- `source` is a short key validated against the code registry (not an enumerated CHECK), so adding a source needs no migration. This is the one deliberate exception to the controlled-list rule in `.claude/rules/files.md`. A `CHECK` on `source` still enforces its shape (`^[a-z0-9_]{2,30}$`), and a retired source's key is never reused or deleted from the registry, only marked `retired`, so old listings keep a valid `source` value.
 
 **Status matrix** (one row per slice; a slice is closed only when all four columns are ticked):
 
@@ -386,7 +386,7 @@ Further sources from `docs/listing-sources.md` get their own S3 row when the own
 
 Acceptance criteria:
 - No source is ingested automatically until its access gate is recorded in `docs/listing-sources.md`.
-- Discovered listings never expose owner phone numbers.
+- Converting a listing pre-fills every field the source page gave (owner name, phone, address included, when present); the advisor fills in anything the source didn't have.
 - A failing source does not affect the main API or other sources.
 - Converting a listing creates a normal Property file under the existing visibility and history rules.
 - Every listing shown in the UI names its source.
