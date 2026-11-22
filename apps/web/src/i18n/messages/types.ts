@@ -42,6 +42,16 @@ export type Messages = {
     roles: { manager: string; advisor: string };
     plans: { solo: string; small: string; large: string };
     comingSoon: string;
+    statsTitle: string;
+    totalActive: string;
+    newThisWeek: string;
+    urgent: string;
+    contractsOverdue: string;
+    contractsEnding7Days: string;
+    contractsEnding30Days: string;
+    dealBreakdown: string;
+    deals: { sale: string; presale: string; rent: string; mortgage: string };
+    noActiveProperties: string;
   };
   errors: {
     invalidCredentials: string;

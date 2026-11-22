@@ -68,6 +68,21 @@ export type PropertyDetail = PropertyRow & {
   updated_at: string;
 };
 
+export type PropertyStats = {
+  total_active: number;
+  by_deal_type: {
+    sale: number;
+    presale: number;
+    rent: number;
+    mortgage: number;
+  };
+  new_this_week: number;
+  urgent: number;
+  contracts_overdue: number;
+  contracts_ending_7_days: number;
+  contracts_ending_30_days: number;
+};
+
 export type HistoryEntry = {
   id: string;
   user: { id: string; full_name: string };
