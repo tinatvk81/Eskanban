@@ -1,0 +1,15 @@
+{
+  "external_id": "divar-test-1001",
+  "url": "https://divar.ir/v/test-1001",
+  "title": "آپارتمان دو خوابه",
+  "owner_name": "فروشنده نمونه",
+  "owner_phone": "09120000000",
+  "address": "مشهد، نمونه",
+  "district": "احمدآباد",
+  "deal_type": "sale",
+  "property_types": ["apartment", " apartment ", "residential"],
+  "price_total": "۱۲٬۵۰۰٬۰۰۰٬۰۰۰",
+  "deposit": null,
+  "monthly_rent": null,
+  "posted_at": "2026-11-20"
+}
