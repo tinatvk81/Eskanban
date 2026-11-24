@@ -377,6 +377,8 @@ Status: design approved by the owner 2026-11-22; implementation proceeds slice b
 | S3.kilid | Kilid connector | [ ] | [ ] | [ ] | [ ] |
 | S4 | Source and owner-only filters, cross-source duplicate hints | [ ] | [ ] | [ ] | [ ] |
 
+**S2 progress (2026-11-24):** S2.1 (contract + mapper), S2.2 (ingestion service) and S2.3 (full-cycle tests) are done and verified; S2.4 (CLI + kill switch), S2.5 (run status + 90-day cleanup) and S2.6 (frontend last-run status) are pending. The S2 boxes above stay open until S2 closes. Details: the F7 / S2.x implementation logs below.
+
 Further sources from `docs/listing-sources.md` get their own S3 row when the owner decides.
 
 **Slice S1 checklist:**
@@ -473,3 +475,71 @@ Update this section at the end of each work session.
 6. Next phase after F4 closes: F7 — Listing ingestion (moved ahead of F5 on 2026-11-22). Start with F7.1 design for approval; work in vertical slices (Backend + Frontend + tests + docs per slice, see the F7 status matrix); no live ingestion from a source until its access gate is recorded in `docs/listing-sources.md`. F5 (user management) follows.
 
 **Last updated:** 2026-11-22
+
+---
+
+## F7 / S2.1 implementation log — 2026-11-24
+
+**Scope:** shared connector contract and raw-to-normalized mapper only.
+
+**Implementation present:**
+- `apps/api/app/ingest/contracts.py`: `RawListing`, immutable
+  `NormalizedListing`, and synchronous iterable `ListingConnector` protocol.
+- `apps/api/app/ingest/mapper.py`: pure validation and normalization with no
+  database or network access.
+- `apps/api/tests/fixtures/ingestion/divar_listing.json`: offline Divar fixture.
+- `apps/api/tests/test_ingestion_mapper.py`: mapper unit tests for fixture
+  mapping, optional values, source-key validation, text limits, integer
+  bounds, Persian/Arabic digits, zero values, dates and property types.
+- `docs/listing-sources.md`: shared contract and global-storage rules.
+
+**Design constraints:**
+- Connector implementations only yield raw records; they do not persist data.
+- Normalized data targets global `source_listings`.
+- Ingestion does not create `listing_inbox` rows. Distribution remains the
+  responsibility of later Lead Routing.
+- No live connector, network request, source enablement, migration, CLI,
+  cleanup job or Frontend status UI is included in S2.1.
+- The existing manual add-from-link flow is unchanged.
+
+**Verification — passed:**
+- `python3 -m pytest -q tests/test_ingestion_mapper.py`: 29 passed.
+- `ruff check app/ingest/contracts.py app/ingest/mapper.py tests/test_ingestion_mapper.py`: passed.
+- `ruff format --check app/ingest/contracts.py app/ingest/mapper.py tests/test_ingestion_mapper.py`: passed.
+- `git diff --check`: passed.
+- One unrelated `StarletteDeprecationWarning` remains for the existing
+  `starlette.testclient` / `httpx` dependency combination; no dependency
+  changes were made.
+
+**S2.1 status: COMPLETE.** The shared connector contract, pure mapper,
+offline fixture, unit tests and documentation are implemented and verified.
+The overall S2 matrix remains open until its remaining Backend, Frontend,
+test and documentation criteria are verified.
+
+**Next:** S2.2 — implement the global ingestion service, deduplication,
+`last_seen_at` updates and Gone-state recovery, with isolated database tests.
+
+## F7 / S2.2 implementation log — 2026-11-24
+
+- Added `apps/api/app/ingest/service.py`: `ingest_listings(session, listings, *, now=None)` upserts into `source_listings` with `INSERT ... ON CONFLICT (source, external_id) DO UPDATE`.
+- Behavior: new listing sets `first_seen_at`/`last_seen_at`; existing listing replaces content fields (source is authoritative) and refreshes `last_seen_at`, keeping `first_seen_at`; a Gone listing seen again gets `is_gone=false`, `gone_at=NULL` and is counted as `restored`.
+- The service never touches `listing_inbox` and never commits (caller owns the transaction).
+- Not in S2.2: marking unseen listings as Gone, run records, CLI/kill switch, cleanup (S2.4/S2.5).
+- Tests: `apps/api/tests/test_ingestion_service.py` (create, update, in-batch dedup, per-source key, restore from Gone, no inbox rows, no unmapped fields).
+- Note for S2.3: the `db` fixture in `tests/conftest.py` does not truncate `source_listings`, `listing_inbox` or `source_ingestion_runs`; S2.2 tests clean those tables themselves.
+
+**S2.2 status: COMPLETE.** Verified on an isolated disposable PostgreSQL 16 (Docker, 127.0.0.1:55432): 36 passed, 1 warning in 2.01s. The F7 status matrix row for S2 stays open until S2.3–S2.6 are done.
+**Next:** S2.3 — full-cycle integration test with the offline Divar fixture and an isolated database.
+
+## F7 / S2.3 implementation log — 2026-11-24
+
+**Scope:** full-cycle ingestion tests only (offline Divar fixture -> mapper -> `ingest_listings` -> isolated PostgreSQL). No application code changed.
+
+**Implementation present:**
+- `apps/api/tests/test_ingestion_cycle.py`: offline `FakeConnector` and `run_cycle` helper; tests for first run (stored values equal mapper output), in-place update (same row id, `first_seen_at` kept), unchanged rerun, duplicate record in one run, restore from Gone, and inbox safety (an existing `converted` inbox row stays untouched and no inbox rows are created).
+- `apps/api/tests/conftest.py`: new `ingestion_clean` fixture (truncates `listing_inbox`, `source_ingestion_runs`, `source_listings` before and after a test). Existing fixtures are unchanged.
+
+**Verification — passed:** `pytest tests/test_ingestion_cycle.py tests/test_ingestion_service.py`: 13 passed, 1 warning in 2.72s on a disposable PostgreSQL 16 (Docker, 127.0.0.1:55432; not a development database).
+
+**S2.3 status: COMPLETE.** The F7 status matrix row for S2 stays open until S2.4–S2.6 are done.
+**Next:** S2.4 — `ingest` CLI with the `ESKANBAN_INGESTION_ENABLED` kill switch.

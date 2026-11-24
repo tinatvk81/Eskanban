@@ -69,3 +69,23 @@ For every source, record in the "Gate log" below:
 - Sheypoor (unofficial tool that uses the site's own JSON API): https://pypi.org/project/sheypoor-mcp/
 - Kilid (unofficial tool; states Kilid has no public API): https://pypi.org/project/kilid-mcp/
 - Comparison articles used for candidates: https://www.irantoprank.com/the-best-real-estate-ad-site/ and https://www.markazeahan.com/top-10-real-estate-software-in-iran/
+
+## Shared ingestion contract (F7 / S2.1)
+
+The shared ingestion contract lives in `apps/api/app/ingest/`:
+
+- `contracts.py` defines `RawListing`, immutable `NormalizedListing`, and the
+  network-agnostic `ListingConnector` protocol.
+- A connector exposes its stable `source_key` and yields raw records through
+  `fetch_listings()`. It does not write to the database.
+- `mapper.py` validates source keys, required identity fields, database column
+  length limits, integer ranges, Persian/Arabic numeric digits, dates, and
+  property types. It has no database or network dependency.
+- Missing optional source fields remain `None`; absent property types become
+  an empty tuple. Numeric zero is preserved as a real value.
+- The normalized result is intended for global `source_listings` upsert.
+  Ingestion must not create tenant-specific `listing_inbox` rows; Lead Routing
+  is a separate later operation.
+- Offline fixtures and mapper tests must not contact external sites.
+- This contract does not enable any source. All current source statuses and
+  access gates remain unchanged.
