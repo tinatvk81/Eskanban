@@ -221,3 +221,21 @@ def make_ctx(agency_id, user_id, role):
         session_id=uuid.uuid4(),
         must_change_password=False,
     )
+
+
+@pytest.fixture
+def ingestion_clean(db):
+    """Empty the global ingestion tables before and after a test (F7 S2.3+)."""
+
+    def _truncate():
+        with db.begin() as conn:
+            conn.execute(
+                text(
+                    "TRUNCATE listing_inbox, source_ingestion_runs, "
+                    "source_listings CASCADE"
+                )
+            )
+
+    _truncate()
+    yield
+    _truncate()
