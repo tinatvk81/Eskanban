@@ -1,7 +1,17 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, String, Uuid, func
+from sqlalchemy import (
+    BigInteger,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    Uuid,
+    func,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -15,7 +25,14 @@ class SourceListing(IdMixin, Base):
     beyond what the source's own ad page shows."""
 
     __tablename__ = "source_listings"
-    __table_args__ = (Index("ix_source_listings_source_external", "source", "external_id", unique=True),)
+    __table_args__ = (
+        Index(
+            "ix_source_listings_source_external",
+            "source",
+            "external_id",
+            unique=True,
+        ),
+    )
 
     source: Mapped[str] = mapped_column(String(30), nullable=False)
     external_id: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -44,6 +61,11 @@ class SourceListing(IdMixin, Base):
     )
     is_gone: Mapped[bool] = mapped_column(nullable=False, server_default="false")
 
+    gone_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
 
 class ListingInbox(IdMixin, TenantMixin, Base):
     """Per-agency state on a SourceListing: new / dismissed / converted."""
@@ -63,3 +85,65 @@ class ListingInbox(IdMixin, TenantMixin, Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+
+class SourceIngestionRun(IdMixin, Base):
+    """Global execution record for one source ingestion run."""
+
+    __tablename__ = "source_ingestion_runs"
+    __table_args__ = (
+        Index(
+            "ix_source_ingestion_runs_source_started",
+            "source",
+            "started_at",
+        ),
+        CheckConstraint(
+            "source ~ '^[a-z0-9_]{2,30}$'",
+            name="source_shape",
+        ),
+        CheckConstraint(
+            "status IN ('running', 'succeeded', 'failed')",
+            name="status_valid",
+        ),
+        CheckConstraint(
+            "records_seen >= 0 AND listings_created >= 0 "
+            "AND listings_updated >= 0 AND listings_marked_gone >= 0",
+            name="counts_nonnegative",
+        ),
+    )
+
+    source: Mapped[str] = mapped_column(String(30), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        server_default="running",
+    )
+
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    records_seen: Mapped[int] = mapped_column(
+        nullable=False,
+        server_default="0",
+    )
+    listings_created: Mapped[int] = mapped_column(
+        nullable=False,
+        server_default="0",
+    )
+    listings_updated: Mapped[int] = mapped_column(
+        nullable=False,
+        server_default="0",
+    )
+    listings_marked_gone: Mapped[int] = mapped_column(
+        nullable=False,
+        server_default="0",
+    )
+
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)

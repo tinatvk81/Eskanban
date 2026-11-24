@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000"
     database_url: str = "postgresql+psycopg://eskanban:eskanban@localhost:5432/eskanban"
 
+    # Global kill switch for source ingestion; disabled by default.
+    ingestion_enabled: bool = False
+
     # Sessions: sliding idle expiry, capped by an absolute maximum lifetime.
     session_idle_days: int = 7
     session_max_days: int = 30
