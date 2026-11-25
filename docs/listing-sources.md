@@ -89,3 +89,11 @@ The shared ingestion contract lives in `apps/api/app/ingest/`:
 - Offline fixtures and mapper tests must not contact external sites.
 - This contract does not enable any source. All current source statuses and
   access gates remain unchanged.
+
+## Ingestion CLI (F7 / S2.4)
+
+`python -m app.cli ingest --source <key>` runs one source and needs no password.
+
+- It does nothing unless `ESKANBAN_INGESTION_ENABLED=true` (default: off), the source is `enabled` in `apps/api/app/domain/sources.py`, and a connector is registered in `apps/api/app/ingest/registry.py`.
+- All records are fetched and mapped before anything is written; a bad record or a failing connector stores nothing.
+- The registry has no connectors until slice S3, and every source is still `planned`, so the command currently refuses all sources.

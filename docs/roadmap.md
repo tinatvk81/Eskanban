@@ -543,3 +543,20 @@ test and documentation criteria are verified.
 
 **S2.3 status: COMPLETE.** The F7 status matrix row for S2 stays open until S2.4–S2.6 are done.
 **Next:** S2.4 — `ingest` CLI with the `ESKANBAN_INGESTION_ENABLED` kill switch.
+
+## F7 / S2.4 implementation log — 2026-11-25
+
+**Scope:** `ingest` CLI, global kill switch and the ENABLED-source gate. No live connector is added and no source is enabled.
+
+**Implementation present:**
+- `apps/api/app/ingest/registry.py`: `CONNECTORS` (source key -> connector factory); empty in production code until slice S3.
+- `apps/api/app/ingest/runner.py`: `run_source(session, source_key)`. Gates in order: `ESKANBAN_INGESTION_ENABLED`, source known and `ENABLED` in `app/domain/sources.py`, connector registered. Every record is fetched and mapped before the first database write (all-or-nothing). Error codes: `ingestion_disabled`, `source_not_enabled`, `connector_missing`, `connector_failed`, `invalid_input`.
+- `apps/api/app/cli.py`: new `ingest --source <key>` command. It never asks for a password (`needs_password=False`) and commits only after a successful run. `create-agency` and `set-password` are unchanged and still prompt.
+- `apps/api/tests/test_ingest_cli.py`: kill switch off, unknown source, PLANNED source refused, missing connector, success (committed, no password prompt), repeat run updates, bad record rolls back the whole run, connector error, wrong connector source key.
+
+**Verification — passed:** focused CLI tests and the full Backend suite: 364 passed, 1 xfailed, 1 warning in 48.47s on a disposable PostgreSQL 16 (Docker, 127.0.0.1:55432; not a development database).
+
+**Not in S2.4:** run records and counters, 90-day cleanup (S2.5), last-run status in the Frontend (S2.6). With every source still `planned`, the real `ingest` command refuses all sources by design.
+
+**S2.4 status: COMPLETE.** The F7 status matrix row for S2 stays open until S2.5–S2.6 are done.
+**Next:** S2.5 — run status records and 90-day Gone cleanup.
