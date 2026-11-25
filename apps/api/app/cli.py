@@ -3,8 +3,10 @@
     python -m app.cli create-agency --name "Sunrise Realty" --slug sunrise --plan small \
         --seats 3 --manager-name "Ali Rezaei" --manager-phone 09121234567
     python -m app.cli set-password --phone 09121234567
+    python -m app.cli ingest --source divar
 
 Passwords are always typed at a hidden prompt, never passed as arguments.
+The ingest command needs no password; it does nothing unless ESKANBAN_INGESTION_ENABLED is true.
 """
 
 import argparse
@@ -15,6 +17,7 @@ from app.core.errors import DomainError, InvalidInput
 from app.core.phone import normalize_phone
 from app.db.models import Plan, User
 from app.db.session import system_session
+from app.ingest.runner import run_source
 from app.services.agencies import create_agency
 from app.services.auth import reset_password
 
@@ -55,6 +58,16 @@ def cmd_set_password(args: argparse.Namespace, password: str) -> str:
         return f"Password reset for {user.phone}; they must change it at next login"
 
 
+def cmd_ingest(args: argparse.Namespace, _password: str) -> str:
+    with system_session() as session:
+        result = run_source(session, args.source)
+        session.commit()
+        return (
+            f"Ingested '{args.source}': seen={result.seen} created={result.created} "
+            f"updated={result.updated} restored={result.restored}"
+        )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -72,13 +85,18 @@ def build_parser() -> argparse.ArgumentParser:
     reset = sub.add_parser("set-password", help="set a temporary password for a user")
     reset.add_argument("--phone", required=True)
     reset.set_defaults(func=cmd_set_password)
+
+    ingest = sub.add_parser("ingest", help="ingest listings from one enabled source (no password)")
+    ingest.add_argument("--source", required=True)
+    ingest.set_defaults(func=cmd_ingest, needs_password=False)
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        print(args.func(args, _prompt_password()))
+        password = _prompt_password() if getattr(args, "needs_password", True) else ""
+        print(args.func(args, password))
     except DomainError as exc:
         print(f"error ({exc.code}): {exc}", file=sys.stderr)
         return 1
